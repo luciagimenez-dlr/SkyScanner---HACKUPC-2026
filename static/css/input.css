@@ -1,0 +1,196 @@
+/* ============================================================
+   input.css — Pàgina d'Input / Perfil d'usuari
+   ============================================================ */
+
+.page-input { padding-top: 80px; }
+
+/* ---- Layout amb leaderboard lateral ---- */
+.input-main {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: var(--space-xl) 48px var(--space-2xl);
+  position: relative;
+}
+
+/* ---- Capçalera ---- */
+.page-header { text-align: center; margin-bottom: var(--space-xl); }
+.page-header__title {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-weight: 300;
+  margin-bottom: var(--space-md);
+}
+.page-header__desc { color: var(--color-text-muted); max-width: 500px; margin: 0 auto; }
+
+/* ---- Seccions del formulari ---- */
+.input-section {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-xl);
+  margin-bottom: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.input-section__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: var(--space-md);
+}
+
+.step-number {
+  font-family: var(--font-display);
+  font-size: 2.5rem;
+  font-weight: 300;
+  color: var(--color-accent);
+  line-height: 1;
+  min-width: 50px;
+}
+
+.input-section__header h2 {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 400;
+}
+
+/* ---- Targetes d'experiència ---- */
+.experience-card {
+  background: var(--color-input);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-lg);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  animation: fadeIn 0.3s ease;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.experience-card__remove {
+  position: absolute;
+  top: 12px; right: 12px;
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: 50%;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  width: 28px; height: 28px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem;
+  transition: all var(--transition);
+}
+.experience-card__remove:hover { border-color: #c0392b; color: #c0392b; }
+
+/* ---- Stars rating ---- */
+.star-rating { display: flex; gap: 4px; }
+.star {
+  font-size: 1.5rem;
+  color: var(--color-border);
+  cursor: pointer;
+  transition: color var(--transition);
+}
+.star.active, .star:hover { color: var(--color-accent); }
+
+/* ---- Upload zona VR ---- */
+.vr-upload-zone {
+  border: 2px dashed var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-xl);
+  text-align: center;
+  cursor: pointer;
+  transition: all var(--transition);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-md);
+}
+.vr-upload-zone:hover,
+.vr-upload-zone.dragover {
+  border-color: var(--color-accent);
+  background: var(--color-accent-dim);
+}
+.vr-upload-zone__icon { font-size: 3rem; color: var(--color-accent); }
+.vr-upload-zone__text { font-size: 1.1rem; font-weight: 400; }
+.vr-upload-zone__subtext { font-size: 0.85rem; color: var(--color-text-muted); }
+
+/* ---- Progress bar de conversió VR ---- */
+.vr-progress {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-md);
+}
+.progress-bar {
+  width: 100%;
+  height: 6px;
+  background: var(--color-border);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+}
+.progress-bar__fill {
+  height: 100%;
+  background: var(--color-accent);
+  border-radius: inherit;
+  animation: progress-indeterminate 1.5s ease-in-out infinite;
+}
+@keyframes progress-indeterminate {
+  0%   { width: 0%; margin-left: 0%; }
+  50%  { width: 60%; margin-left: 20%; }
+  100% { width: 0%; margin-left: 100%; }
+}
+.vr-progress__hint { font-size: 0.8rem; color: var(--color-text-muted); }
+
+/* ---- Section description ---- */
+.section-desc { color: var(--color-text-muted); font-size: 0.95rem; line-height: 1.7; }
+
+/* ---- Submit area ---- */
+.submit-area {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-lg) 0;
+}
+
+/* ---- Leaderboard (aside) ---- */
+.leaderboard {
+  position: fixed;
+  top: 120px;
+  right: 32px;
+  width: 220px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  z-index: 50;
+}
+.leaderboard__title { font-family: var(--font-display); font-size: 1.1rem; margin-bottom: var(--space-md); }
+.leaderboard__loading { color: var(--color-text-muted); font-size: 0.85rem; }
+
+.leaderboard-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 8px 0;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 0.85rem;
+}
+.leaderboard-item:last-child { border-bottom: none; }
+.leaderboard-item__rank { color: var(--color-accent); font-weight: 600; min-width: 20px; }
+.leaderboard-item__name { flex: 1; }
+.leaderboard-item__pts { color: var(--color-accent); font-weight: 500; }
+
+@media (max-width: 1100px) {
+  .leaderboard { display: none; } /* Ocultem el leaderboard en pantalles petites */
+}
+@media (max-width: 900px) {
+  .input-main { padding: var(--space-xl) 24px var(--space-2xl); }
+  .input-section { padding: var(--space-lg); }
+}
