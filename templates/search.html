@@ -1,0 +1,1104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WanderLens — Plan your trip</title>
+  <link rel="stylesheet" href="/static/css/main.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Sora:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+  <style>
+    :root {
+      --blue:#0770e3; --blue-dark:#044da1; --blue-light:#e8f1fd;
+      --blue-dim:rgba(7,112,227,.09); --blue-line:rgba(7,112,227,.20);
+      --bg:#f5f7fa; --card:#fff; --border:rgba(0,0,0,.09);
+      --text:#111827; --muted:#6b7280;
+    }
+    * { box-sizing:border-box; }
+    body { background:var(--bg); color:var(--text); font-family:'Plus Jakarta Sans',sans-serif; margin:0; }
+
+    .nav { position:fixed; top:0; left:0; right:0; z-index:200; height:64px;
+      display:flex; justify-content:space-between; align-items:center;
+      padding:0 2rem; background:#fff; border-bottom:1px solid var(--border);
+      box-shadow:0 1px 4px rgba(0,0,0,.06); }
+    .nav__logo { display:flex; align-items:center; gap:.6rem; text-decoration:none; }
+    .nav__logo-icon { font-family:'Sora',sans-serif; font-weight:800; font-size:1.2rem; color:var(--blue); }
+    .nav__logo-text { font-family:'Sora',sans-serif; font-size:1.15rem; font-weight:700; color:var(--blue-dark); }
+    .nav__links { display:flex; gap:.4rem; align-items:center; }
+    .nav__link { color:var(--muted); text-decoration:none; font-size:.86rem; font-weight:500;
+      padding:.4rem .8rem; border-radius:7px; transition:all .18s; }
+    .nav__link:hover { color:var(--blue); background:var(--blue-dim); }
+    .nav__link.active { color:var(--blue); font-weight:600; }
+
+    .search-layout { display:grid; grid-template-columns:380px 1fr; height:calc(100vh - 64px); margin-top:64px; }
+    @media(max-width:900px) { .search-layout { grid-template-columns:1fr; height:auto; } }
+
+    .sidebar { display:flex; flex-direction:column; border-right:1px solid var(--border);
+      background:#fff; height:100%; overflow:hidden; }
+    .sidebar-header { padding:1.4rem 1.6rem; border-bottom:1px solid var(--border); }
+    .sidebar-header h2 { font-family:'Sora',sans-serif; font-size:1.2rem; font-weight:700;
+      color:var(--blue-dark); margin:0 0 .2rem; }
+    .sidebar-header p { font-size:.82rem; color:var(--muted); margin:0; }
+
+    .filters { padding:1rem 1.2rem; border-bottom:1px solid var(--border); display:flex;
+      flex-direction:column; gap:.5rem; background:#fafbff; }
+    .filter-row { display:flex; gap:.5rem; }
+    .filter-row select, .filter-row input {
+      flex:1; background:#fff; border:1.5px solid var(--border); color:var(--text);
+      padding:.48rem .75rem; border-radius:7px; font-family:inherit; font-size:.8rem;
+      outline:none; transition:border-color .2s;
+    }
+    .filter-row select:focus, .filter-row input:focus { border-color:var(--blue); }
+    .filter-label { font-size:.72rem; color:var(--muted); font-weight:600; letter-spacing:.04em; }
+
+    .chat-messages { flex:1; overflow-y:auto; padding:1rem 1.2rem;
+      display:flex; flex-direction:column; gap:.75rem; background:#fafbff; }
+    .msg { max-width:92%; border-radius:12px; padding:.75rem 1rem;
+      font-size:.87rem; line-height:1.55; }
+    .msg-ai { background:#fff; border:1px solid var(--border);
+      color:var(--text); align-self:flex-start;
+      box-shadow:0 1px 4px rgba(0,0,0,.05); }
+    .msg-user { background:var(--blue); color:#fff; align-self:flex-end; }
+    .msg-typing { align-self:flex-start; }
+    .typing-dots { display:flex; gap:4px; padding:.5rem 0; }
+    .typing-dots span { width:7px; height:7px; background:var(--blue); border-radius:50%;
+      animation:bounce .9s infinite; }
+    .typing-dots span:nth-child(2) { animation-delay:.2s; }
+    .typing-dots span:nth-child(3) { animation-delay:.4s; }
+    @keyframes bounce { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-7px)} }
+
+    .chat-input-area { padding:.9rem 1.2rem; border-top:1px solid var(--border);
+      display:flex; gap:.5rem; background:#fff; }
+    .chat-input { flex:1; background:#f5f7fa; border:1.5px solid var(--border);
+      color:var(--text); padding:.65rem .9rem; border-radius:8px;
+      font-family:inherit; font-size:.88rem; outline:none; resize:none;
+      transition:border-color .2s; }
+    .chat-input:focus { border-color:var(--blue); background:#fff; }
+    .chat-send { background:var(--blue); color:#fff; border:none; border-radius:8px;
+      padding:.65rem 1.2rem; font-weight:700; cursor:pointer; font-size:.9rem;
+      transition:background .18s; }
+    .chat-send:hover { background:var(--blue-dark); }
+    .chat-send:disabled { opacity:.45; cursor:not-allowed; }
+
+    .results-panel { display:flex; flex-direction:column; overflow:hidden; background:var(--bg); }
+    .results-empty { display:flex; flex-direction:column; align-items:center;
+      justify-content:center; flex:1; gap:1rem; color:var(--muted);
+      text-align:center; padding:3rem; }
+    .results-empty__graphic {
+      width:80px; height:80px; border-radius:50%; background:var(--blue-dim);
+      display:flex; align-items:center; justify-content:center;
+      font-family:'Sora',sans-serif; font-size:1.4rem; font-weight:700;
+      color:var(--blue); margin-bottom:.5rem;
+    }
+    .results-empty h3 { font-family:'Sora',sans-serif; color:var(--text); font-size:1.3rem; margin:0; }
+    .results-empty p { color:var(--muted); max-width:360px; line-height:1.6; font-size:.9rem; }
+
+    .result-tabs { display:flex; border-bottom:1px solid var(--border);
+      padding:0 1.5rem; flex-shrink:0; background:#fff; }
+    .rtab { padding:.75rem 1.2rem; border:none; background:transparent;
+      color:var(--muted); cursor:pointer; font-family:inherit; font-size:.85rem;
+      font-weight:500; border-bottom:2px solid transparent; margin-bottom:-1px;
+      transition:all .2s; white-space:nowrap; }
+    .rtab.active { color:var(--blue); border-bottom-color:var(--blue); font-weight:600; }
+    .tab-content { flex:1; overflow-y:auto; padding:1.5rem; }
+    .rtab-pane { display:none; }
+    .rtab-pane.active { display:block; }
+
+    .flights-header { display:flex; justify-content:space-between; align-items:center;
+      margin-bottom:1rem; flex-wrap:wrap; gap:.5rem; }
+    .flights-header h3 { font-family:'Sora',sans-serif; font-size:1.1rem; color:var(--blue-dark); margin:0; }
+    .sort-btns { display:flex; gap:.3rem; }
+    .sort-btn { font-size:.75rem; padding:.3rem .75rem; border:1.5px solid var(--border);
+      border-radius:6px; background:#fff; color:var(--muted); cursor:pointer;
+      font-family:inherit; transition:all .2s; }
+    .sort-btn.active { border-color:var(--blue); color:var(--blue); background:var(--blue-dim); }
+
+    .flight-card { display:flex; align-items:center; gap:.8rem; padding:.9rem 1rem;
+      margin-bottom:.5rem; background:#fff; border:1px solid var(--border);
+      border-radius:10px; transition:border-color .2s, box-shadow .2s; flex-wrap:wrap;
+      box-shadow:0 1px 3px rgba(0,0,0,.04); }
+    .flight-card:hover { border-color:var(--blue-line); box-shadow:0 2px 12px rgba(7,112,227,.1); }
+    .fc-airline { font-weight:700; font-size:.88rem; min-width:110px; color:var(--text); }
+    .fc-times { font-size:.82rem; color:var(--muted); flex:1; }
+    .fc-times span { display:inline-block; margin-right:.4rem; }
+    .fc-stops { font-size:.72rem; background:var(--blue-dim); padding:2px 9px;
+      border-radius:20px; color:var(--blue); white-space:nowrap; font-weight:600;
+      border:1px solid var(--blue-line); }
+    .fc-stops.direct { background:#ecfdf5; border-color:#a7f3d0; color:#059669; }
+    .fc-price { font-weight:800; font-size:1.1rem; color:var(--blue-dark); min-width:65px; text-align:right; }
+    .fc-link { font-size:.75rem; padding:.35rem .9rem; border:1.5px solid var(--blue);
+      border-radius:6px; color:var(--blue); text-decoration:none; white-space:nowrap;
+      font-weight:600; transition:all .18s; }
+    .fc-link:hover { background:var(--blue); color:#fff; }
+    .mock-badge { font-size:.68rem; background:#fffbeb; border:1px solid #fde68a;
+      color:#92400e; padding:.1rem .5rem; border-radius:4px; margin-left:.4rem; }
+
+    .sky-search { margin-bottom:1.2rem; display:flex; gap:.5rem; flex-wrap:wrap;
+      background:#fff; border:1px solid var(--border); border-radius:10px; padding:.75rem; }
+    .sky-input { background:#f5f7fa; border:1.5px solid var(--border); color:var(--text);
+      padding:.5rem .8rem; border-radius:7px; font-family:inherit; font-size:.83rem;
+      outline:none; flex:1; min-width:90px; transition:border-color .2s; }
+    .sky-input:focus { border-color:var(--blue); background:#fff; }
+    .sky-btn { background:var(--blue); color:#fff; border:none; border-radius:7px;
+      padding:.5rem 1.1rem; font-weight:700; cursor:pointer; font-size:.83rem;
+      white-space:nowrap; transition:background .18s; }
+    .sky-btn:hover { background:var(--blue-dark); }
+    .mock-notice { background:#fffbeb; border:1px solid #fde68a; border-radius:8px;
+      padding:.65rem 1rem; font-size:.8rem; color:#92400e; margin-bottom:.9rem; }
+
+    .hc-grid { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; }
+    @media(max-width:700px) { .hc-grid { grid-template-columns:1fr; } }
+    .hc-section h4 { font-size:.75rem; color:var(--blue); text-transform:uppercase;
+      letter-spacing:.08em; margin:0 0 .75rem; font-weight:700; }
+    .hotel-card, .car-card { background:#fff; border:1px solid var(--border);
+      border-radius:9px; padding:.8rem 1rem; margin-bottom:.5rem;
+      display:flex; justify-content:space-between; align-items:center;
+      gap:.5rem; box-shadow:0 1px 3px rgba(0,0,0,.04); }
+    .hc-name { font-weight:700; font-size:.87rem; color:var(--text); }
+    .hc-meta { font-size:.73rem; color:var(--muted); margin-top:.15rem; }
+    .hc-price { font-weight:800; color:var(--blue-dark); font-size:.95rem; text-align:right; white-space:nowrap; }
+    .hc-link { font-size:.72rem; color:var(--blue); text-decoration:none; display:block; margin-top:.3rem; text-align:right; font-weight:600; }
+
+    .plan-summary { background:var(--blue-dim); border:1px solid var(--blue-line);
+      border-radius:12px; padding:1.4rem; margin-bottom:1.5rem; }
+    .plan-summary h3 { font-family:'Sora',sans-serif; font-size:1.4rem; color:var(--blue-dark); margin:0 0 .4rem; }
+    .plan-summary p { color:var(--muted); font-size:.88rem; margin:0; line-height:1.6; }
+
+    .day-block { margin-bottom:1.8rem; }
+    .day-header { display:flex; align-items:center; gap:.75rem; margin-bottom:.9rem; }
+    .day-number { background:var(--blue); color:#fff; font-weight:700; font-size:.75rem; padding:.25rem .8rem; border-radius:12px; }
+    .day-theme { font-weight:700; font-size:.97rem; color:var(--text); }
+    .stop-card { display:flex; gap:1rem; padding:.8rem 0; border-bottom:1px solid var(--border); }
+    .stop-card:last-child { border-bottom:none; }
+    .stop-time { font-size:.77rem; color:var(--blue); min-width:44px; font-weight:700; padding-top:.12rem; }
+    .stop-name { font-weight:700; font-size:.92rem; margin-bottom:.18rem; color:var(--text); }
+    .stop-desc { color:var(--muted); font-size:.82rem; line-height:1.5; }
+    .stop-meta { display:flex; gap:.4rem; margin-top:.4rem; flex-wrap:wrap; }
+    .stop-tag { font-size:.69rem; padding:.12rem .5rem; border-radius:5px; background:#f3f4f6; border:1px solid var(--border); color:var(--muted); }
+    .stop-tag.price { color:var(--blue); border-color:var(--blue-line); background:var(--blue-dim); font-weight:600; }
+
+    .section-label {
+      font-size:.7rem; color:var(--blue); text-transform:uppercase;
+      letter-spacing:.1em; margin-bottom:.85rem; font-weight:700; }
+    .budget-section .section-label { color: var(--blue); }
+
+    /* Cultural notes */
+    .cultural-section {
+      background: linear-gradient(135deg, #f0f6ff 0%, #e8f4fd 100%);
+      border: 1px solid var(--blue-line); border-radius: 12px;
+      padding: 1.2rem 1.4rem; margin-bottom: 1rem;
+    }
+    .note-item { font-size:.84rem; color:#334155; padding:.45rem 0;
+      border-bottom:1px solid rgba(7,112,227,.1); display:flex; gap:.75rem; line-height:1.6; }
+    .note-item:last-child { border-bottom: none; padding-bottom: 0; }
+    .note-item::before { content:'—'; color:var(--blue); flex-shrink:0; font-weight:700; }
+
+    /* Sustainability tips */
+    .sustain-section {
+      background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+      border: 1px solid #6ee7b7; border-radius: 12px;
+      padding: 1.2rem 1.4rem; margin-bottom: 1rem;
+    }
+    .sustain-section .section-label { color: #059669; }
+    .sustain-item { font-size:.84rem; color:#1e4d3a; padding:.4rem 0;
+      border-bottom:1px solid rgba(5,150,105,.12); display:flex; gap:.75rem; line-height:1.6; }
+    .sustain-item:last-child { border-bottom: none; padding-bottom: 0; }
+    .sustain-item::before { content:'—'; color:#059669; flex-shrink:0; font-weight:700; }
+
+    /* Useful phrases */
+    .phrases-section {
+      background: linear-gradient(135deg, #faf5ff 0%, #f5f0ff 100%);
+      border: 1px solid #ddd6fe; border-radius: 12px;
+      padding: 1.2rem 1.4rem; margin-bottom: 1rem;
+    }
+    .phrases-section .section-label { color: #7c3aed; }
+    .phrases-grid { display: flex; flex-direction: column; gap: .5rem; }
+    .phrase-card {
+      background: #fff; border: 1px solid #ede9fe; border-radius: 8px;
+      padding: .65rem .9rem; display: grid;
+      grid-template-columns: 130px 1fr; gap: 0 1rem; align-items: start;
+    }
+    .phrase-label {
+      font-size:.69rem; color:#7c3aed; font-weight:700; text-transform:uppercase;
+      letter-spacing:.05em; padding-top:.18rem; line-height:1.3;
+    }
+    .phrase-local {
+      font-size:.97rem; font-weight:700; color:#1e1b4b; line-height:1.35; grid-row:1;
+    }
+    .phrase-phonetic {
+      font-size:.77rem; color:#7c3aed; font-style:italic; grid-column:2; line-height:1.3; margin-top:.1rem;
+    }
+    .phrase-note {
+      font-size:.72rem; color:var(--muted); grid-column:2; margin-top:.15rem; line-height:1.4;
+    }
+    .budget-grid { display:grid; grid-template-columns:1fr 1fr; gap:.6rem; }
+    .budget-item { background:#fff; border:1px solid var(--border); border-radius:9px; padding:.7rem 1rem; }
+    .budget-item__label { font-size:.7rem; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; font-weight:600; }
+    .budget-item__value { font-size:.95rem; color:var(--blue-dark); font-weight:700; margin-top:.12rem; }
+
+    #map { height:260px; width:100%; border-radius:10px; margin:1.2rem 0; border:1px solid var(--border); z-index:1; }
+
+    .comm-exp { background:#fff; border:1px solid var(--border); border-radius:10px;
+      padding:1rem 1.2rem; margin-bottom:.75rem; box-shadow:0 1px 3px rgba(0,0,0,.04); }
+    .comm-exp__header { display:flex; justify-content:space-between; align-items:center; margin-bottom:.4rem; }
+    .comm-exp__user { font-size:.78rem; color:var(--blue); font-weight:600; }
+    .comm-exp__rating { font-size:.78rem; color:#f59e0b; }
+    .comm-exp__city { font-size:.72rem; color:var(--muted); margin-bottom:.3rem; }
+    .comm-exp__text { font-size:.85rem; color:var(--muted); line-height:1.55; }
+
+    .video-grid { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+    @media(max-width:600px) { .video-grid { grid-template-columns:1fr; } }
+    .vid-card { background:#fff; border:1px solid var(--border); border-radius:10px; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,.04); }
+    .vid-card__info { padding:.8rem; }
+    .vid-card__title { font-size:.88rem; font-weight:700; margin-bottom:.2rem; color:var(--text); }
+    .vid-card__user { font-size:.72rem; color:var(--muted); }
+    .vid-card__links { display:flex; gap:.4rem; margin-top:.6rem; flex-wrap:wrap; }
+    .vid-btn { font-size:.72rem; padding:.25rem .65rem; border-radius:5px; border:1.5px solid;
+      text-decoration:none; cursor:pointer; background:transparent;
+      font-family:inherit; display:inline-block; font-weight:600; }
+    .vid-btn-orig { border-color:var(--border); color:var(--muted); }
+    .vid-btn-vr { border-color:#a7f3d0; color:#059669; }
+    .vid-btn-orig:hover { background:#f3f4f6; }
+    .vid-btn-vr:hover { background:#ecfdf5; }
+
+    /* Community Lightbox */
+    #comm-lightbox {
+      display:none; position:fixed; inset:0; background:rgba(0,0,0,.88);
+      z-index:2000; align-items:center; justify-content:center; flex-direction:column;
+    }
+    #comm-lightbox.open { display:flex; }
+    #comm-lb-close {
+      position:absolute; top:1.2rem; right:1.5rem; color:#fff; font-size:1.8rem;
+      cursor:pointer; background:none; border:none; line-height:1;
+    }
+  </style>
+</head>
+<body>
+
+<nav class="nav">
+  <a href="/" class="nav__logo">
+    <span class="nav__logo-icon">W</span>
+    <span class="nav__logo-text">WanderLens</span>
+  </a>
+  <div class="nav__links">
+    <a href="/search" class="nav__link active">Plan a Trip</a>
+    <a href="/input"  class="nav__link">Share</a>
+    {% if current_user.is_authenticated %}
+      <a href="/perfil" class="nav__link">{{ current_user.username }}</a>
+      <a href="/logout" class="nav__link">Sign out</a>
+    {% else %}
+      <a href="/login" class="nav__link">Sign in</a>
+    {% endif %}
+  </div>
+</nav>
+
+<div class="search-layout">
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <h2>Plan your trip</h2>
+      <p>Describe where you want to go and we'll build your itinerary.</p>
+    </div>
+
+    <div class="filters">
+      <div class="filter-label">Customise your trip (optional)</div>
+      <div class="filter-row">
+        <select id="f-budget">
+          <option value="">Budget</option>
+          <option value="budget">Budget</option>
+          <option value="mid-range">Mid-range</option>
+          <option value="premium">Premium</option>
+        </select>
+        <select id="f-travelers">
+          <option value="1">1 traveller</option>
+          <option value="2">2 travellers</option>
+          <option value="3">3 travellers</option>
+          <option value="4">4+ travellers</option>
+        </select>
+      </div>
+      <div class="filter-row">
+        <select id="f-origin">
+          <option value="BCN">From: BCN</option>
+          <option value="MAD">From: MAD</option>
+          <option value="VLC">From: VLC</option>
+          <option value="AGP">From: AGP</option>
+          <option value="LHR">From: LHR</option>
+          <option value="CDG">From: CDG</option>
+          <option value="JFK">From: JFK</option>
+          <option value="AMS">From: AMS</option>
+        </select>
+        <input type="date" id="f-date" placeholder="Departure date">
+      </div>
+      <div class="filter-row">
+        <input type="date" id="f-return" placeholder="Return date (optional)">
+      </div>
+    </div>
+
+    <div class="chat-messages" id="chat-messages">
+      <div class="msg msg-ai">
+        Where do you want to go? Enter your destination, travel dates, and any preferences — we'll take care of the rest.
+      </div>
+    </div>
+
+    <div class="chat-input-area">
+      <textarea class="chat-input" id="chat-input"
+        placeholder="e.g. I want to go to Tokyo for 7 days with my partner..." rows="2"></textarea>
+      <button class="chat-send" id="chat-send" onclick="sendMessage()">Send</button>
+    </div>
+  </aside>
+
+  <main class="results-panel" id="results-panel">
+    <div class="results-empty" id="results-empty">
+      <div class="results-empty__graphic">AI</div>
+      <h3>Your trip is waiting</h3>
+      <p>Enter your destination and travel dates on the left to generate a personalised itinerary, flights, hotels, and more.</p>
+    </div>
+
+    <div id="results-content" style="display:none;flex:1;overflow:hidden;flex-direction:column;">
+      <div class="result-tabs">
+        <button class="rtab active" onclick="switchRTab('flights',this)">Flights</button>
+        <button class="rtab" onclick="switchRTab('itinerary',this)">Itinerary</button>
+        <button class="rtab" onclick="switchRTab('conscious',this)">Travel Consciously</button>
+        <button class="rtab" onclick="switchRTab('community',this)">Community</button>
+      </div>
+
+      <div class="tab-content">
+        <div id="rtab-flights" class="rtab-pane active">
+          <div class="sky-search">
+            <input class="sky-input" id="sky-origin" placeholder="Origin (IATA)" maxlength="3" style="max-width:90px;">
+            <input class="sky-input" id="sky-dest"   placeholder="Destination (IATA)" maxlength="3" style="max-width:90px;">
+            <input class="sky-input" id="sky-date"   type="date" style="max-width:145px;" title="Departure Date">
+            <input class="sky-input" id="sky-return" type="date" style="max-width:145px;" title="Return Date (Optional)">
+            <input class="sky-input" id="sky-adults" type="number" value="1" min="1" max="9" style="max-width:65px;" placeholder="Pax">
+            <button class="sky-btn" onclick="searchFlightsManual()">Search</button>
+          </div>
+
+          <div id="sky-mock-notice" class="mock-notice" style="display:none;"></div>
+          <div id="discount-banner" style="display:none;margin-bottom:1rem;background:linear-gradient(90deg,#ecfdf5,#d1fae5);border:1px solid #6ee7b7;border-radius:8px;padding:.85rem 1.1rem;font-size:.85rem;color:#065f46;font-weight:600;">
+            <span id="discount-text"></span> — applied automatically to displayed prices.
+          </div>
+
+          <div class="flights-header">
+            <h3 id="flights-title">Available flights</h3>
+            <div class="sort-btns">
+              <button class="sort-btn active" onclick="sortFlights('price',this)">Price</button>
+              <button class="sort-btn" onclick="sortFlights('duration',this)">Duration</button>
+              <button class="sort-btn" onclick="sortFlights('stops',this)">Stops</button>
+            </div>
+          </div>
+          <div id="flights-list">
+            <p style="color:var(--muted);font-size:.85rem;">Enter a destination in the chat to see available flights.</p>
+          </div>
+
+          <div id="hotels-cars" style="display:none;margin-top:2rem;">
+            <div class="hc-grid">
+              <div class="hc-section">
+                <h4>Hotels</h4>
+                <div id="hotels-list"></div>
+              </div>
+              <div class="hc-section">
+                <h4>Car hire</h4>
+                <div id="cars-list"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="rtab-itinerary" class="rtab-pane">
+          <div id="itinerary-content">
+            <p style="color:var(--muted);font-size:.88rem;">Your AI-generated itinerary will appear here.</p>
+          </div>
+        </div>
+
+        <div id="rtab-conscious" class="rtab-pane">
+          <div id="conscious-content">
+            <p style="color:var(--muted);font-size:.88rem;">Cultural notes, responsible travel tips and useful phrases for your destination will appear here.</p>
+          </div>
+        </div>
+
+        <div id="rtab-community" class="rtab-pane">
+          <div id="community-content">
+            <p style="color:var(--muted);font-size:.88rem;">Community experiences for your destination will load here.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Community Lightbox con viewer 360 -->
+<div id="comm-lightbox">
+  <button id="comm-lb-close">&times;</button>
+
+  <!-- Contenedor 360 (fotos panorámicas) -->
+  <div id="comm-lb-360-wrap" style="display:none;width:90vw;max-width:860px;position:relative;">
+    <div style="font-size:.72rem;color:rgba(255,255,255,.5);margin-bottom:.4rem;text-align:center;letter-spacing:.06em;text-transform:uppercase;">
+      Drag to explore · Scroll to zoom
+    </div>
+    <canvas id="comm-lb-canvas" style="width:100%;height:60vh;border-radius:10px;display:block;cursor:grab;background:#0f172a;"></canvas>
+  </div>
+
+  <!-- Imagen plana (fotos normales) -->
+  <img id="comm-lb-img" src="" alt="" style="display:none;max-width:90vw;max-height:80vh;border-radius:10px;object-fit:contain;">
+
+  <!-- Vídeo -->
+  <video id="comm-lb-video" src="" controls autoplay style="display:none;max-width:90vw;max-height:80vh;border-radius:10px;"></video>
+
+  <div id="comm-lb-label" style="color:rgba(255,255,255,.7);font-size:.82rem;margin-top:.75rem;"></div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script>
+// ── State ─────────────────────────────────────────────────────────────────────
+let currentPlan     = null;
+let currentDestIata = '';
+let currentDestCity = '';
+let currentSortBy   = 'price';
+let allFlights      = [];
+let mapInstance     = null;
+let conversationHistory = [];
+
+// ── 360 viewer state ──────────────────────────────────────────────────────────
+let viewer360 = {
+  img: null, srcData: null, iW: 0, iH: 0,
+  yaw: 0, pitch: 0, fov: 70,
+  dragging: false, lastX: 0, lastY: 0,
+  animFrame: null, initialized: false
+};
+
+// ── Tab switching ─────────────────────────────────────────────────────────────
+function switchRTab(name, btn) {
+  document.querySelectorAll('.rtab-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.rtab').forEach(b => b.classList.remove('active'));
+  document.getElementById('rtab-' + name).classList.add('active');
+  btn.classList.add('active');
+  if (name === 'itinerary' && mapInstance) {
+    setTimeout(() => mapInstance.invalidateSize(), 50);
+  }
+}
+
+// ── Chat ──────────────────────────────────────────────────────────────────────
+async function sendMessage() {
+  const input   = document.getElementById('chat-input');
+  const sendBtn = document.getElementById('chat-send');
+  const text    = input.value.trim();
+  if (!text || sendBtn.disabled) return;
+
+  addMsg(text, 'user');
+  conversationHistory.push({ role: 'user', content: text });
+  input.value = '';
+  sendBtn.disabled = true;
+
+  const dots = addTyping();
+
+  const payload = {
+    message: text,
+    conversation_history: conversationHistory,
+    budget:              document.getElementById('f-budget').value,
+    num_travelers:       document.getElementById('f-travelers').value,
+    travel_style:        [],
+    accessibility_needs: [],
+  };
+
+  try {
+    const res  = await fetch('/search/plan', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    dots.remove();
+
+    if (!res.ok) {
+      addMsg('Something went wrong: ' + (data.error || 'Server error'), 'ai');
+      sendBtn.disabled = false;
+      return;
+    }
+
+    if (data.type === 'conversation') {
+      addMsg(data.message, 'ai');
+      conversationHistory.push({ role: 'assistant', content: data.message });
+    } else if (data.type === 'structured_plan') {
+      currentPlan = data.plan;
+      conversationHistory.push({ role: 'assistant', content: 'Itinerary ready for ' + data.plan.destination });
+      addMsg(`Itinerary for <strong>${data.plan.destination}</strong> is ready. Check the tabs on the right.`, 'ai');
+      renderPlan(data.plan);
+    }
+  } catch (e) {
+    dots.remove();
+    addMsg('Connection error. Please try again.', 'ai');
+  }
+  sendBtn.disabled = false;
+}
+
+document.getElementById('chat-input').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+});
+
+function addMsg(html, type) {
+  const msgs = document.getElementById('chat-messages');
+  const div  = document.createElement('div');
+  div.className = 'msg msg-' + type;
+  div.innerHTML  = html;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+  return div;
+}
+
+function addTyping() {
+  const msgs = document.getElementById('chat-messages');
+  const div  = document.createElement('div');
+  div.className = 'msg msg-typing';
+  div.innerHTML  = '<div class="typing-dots"><span></span><span></span><span></span></div>';
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+  return div;
+}
+
+function showResults() {
+  document.getElementById('results-empty').style.display = 'none';
+  const rc = document.getElementById('results-content');
+  rc.style.display = 'flex';
+}
+
+// ── Render plan ───────────────────────────────────────────────────────────────
+function renderPlan(plan) {
+  showResults();
+  currentDestIata = plan.destination_iata || '';
+  currentDestCity = plan.destination_city_en || plan.destination || '';
+  renderItinerary(plan);
+  renderConscious(plan);
+  renderCommunity(currentDestCity);
+  autoSearchFlights(plan);
+  autoSearchHotelsAndCars(plan);
+}
+
+function renderItinerary(plan) {
+  const el = document.getElementById('itinerary-content');
+  let html = `
+    <div class="plan-summary">
+      <h3>${plan.destination}</h3>
+      <p>${plan.trip_summary || ''}</p>
+    </div>
+    <div id="map"></div>`;
+
+  (plan.days || []).forEach(day => {
+    html += `<div class="day-block">
+      <div class="day-header">
+        <span class="day-number">Day ${day.day}</span>
+        <span class="day-theme">${day.theme || ''}</span>
+      </div>`;
+    (day.stops || []).forEach(stop => {
+      html += `<div class="stop-card">
+        <div class="stop-time">${stop.time || ''}</div>
+        <div class="stop-body">
+          <div class="stop-name">${stop.name}</div>
+          <div class="stop-desc">${stop.description || ''}</div>
+          <div class="stop-meta">
+            ${stop.type ? `<span class="stop-tag">${stop.type}</span>` : ''}
+            ${stop.price_estimate ? `<span class="stop-tag price">${stop.price_estimate}</span>` : ''}
+            ${stop.duration_minutes ? `<span class="stop-tag">${stop.duration_minutes} min</span>` : ''}
+            ${stop.accessibility ? `<span class="stop-tag">Accessible: ${stop.accessibility}</span>` : ''}
+          </div>
+          ${stop.instagram_tip ? `<div style="font-size:.75rem;color:var(--muted);margin-top:.3rem;font-style:italic;">Photo tip: ${stop.instagram_tip}</div>` : ''}
+        </div>
+      </div>`;
+    });
+    html += `</div>`;
+  });
+
+  if (plan.budget_breakdown) {
+    const b = plan.budget_breakdown;
+    html += `<div class="budget-section" style="margin-top:1.5rem;">
+      <div class="section-label">Estimated budget</div>
+      <div class="budget-grid">
+        <div class="budget-item"><div class="budget-item__label">Accommodation</div><div class="budget-item__value">${b.accommodation || '—'}</div></div>
+        <div class="budget-item"><div class="budget-item__label">Food per day</div><div class="budget-item__value">${b.food_per_day || '—'}</div></div>
+        <div class="budget-item"><div class="budget-item__label">Activities</div><div class="budget-item__value">${b.activities || '—'}</div></div>
+        <div class="budget-item"><div class="budget-item__label">Transport</div><div class="budget-item__value">${b.transport || '—'}</div></div>
+      </div>
+    </div>`;
+  }
+
+  el.innerHTML = html;
+  requestAnimationFrame(() => initMap(plan));
+}
+
+function renderConscious(plan) {
+  const el = document.getElementById('conscious-content');
+  let html = `
+    <div class="plan-summary" style="margin-bottom:1.5rem;">
+      <h3>${plan.destination}</h3>
+      <p>Travel thoughtfully — understand the culture, tread lightly, and connect with the place and its people.</p>
+    </div>`;
+
+  if (plan.cultural_notes?.length) {
+    html += `<div class="cultural-section" style="margin-bottom:1.2rem;">
+      <div class="section-label">Culture &amp; etiquette</div>`;
+    html += plan.cultural_notes.map(n => `<div class="note-item">${n}</div>`).join('');
+    html += `</div>`;
+  }
+
+  if (plan.sustainability_tips?.length) {
+    html += `<div class="sustain-section" style="margin-bottom:1.2rem;">
+      <div class="section-label">Responsible travel</div>`;
+    html += plan.sustainability_tips.map(t => `<div class="sustain-item">${t}</div>`).join('');
+    html += `</div>`;
+  }
+
+  if (plan.useful_phrases?.length) {
+    html += `<div class="phrases-section" style="margin-bottom:1rem;">
+      <div class="section-label">Useful phrases</div>
+      <div class="phrases-grid">`;
+    html += plan.useful_phrases.map(p => `
+      <div class="phrase-card">
+        <div class="phrase-label">${p.label || ''}</div>
+        <div class="phrase-local">${p.local_script || ''}</div>
+        <div class="phrase-phonetic">${p.phonetic ? '/ ' + p.phonetic + ' /' : ''}</div>
+        ${p.note ? `<div class="phrase-note">${p.note}</div>` : ''}
+      </div>`).join('');
+    html += `</div></div>`;
+  }
+
+  if (!plan.cultural_notes?.length && !plan.sustainability_tips?.length && !plan.useful_phrases?.length) {
+    html += `<p style="color:var(--muted);font-size:.88rem;">No cultural data available for this destination.</p>`;
+  }
+
+  el.innerHTML = html;
+}
+
+// ── Leaflet map ───────────────────────────────────────────────────────────────
+function initMap(plan) {
+  if (mapInstance) { mapInstance.remove(); mapInstance = null; }
+  const mapEl = document.getElementById('map');
+  if (!mapEl) return;
+
+  const allStops = (plan.days || [])
+    .flatMap(d => d.stops || [])
+    .filter(s => s.lat && s.lng && !isNaN(s.lat) && !isNaN(s.lng));
+
+  if (!allStops.length) { mapEl.style.display = 'none'; return; }
+  mapEl.style.display = 'block';
+
+  mapInstance = L.map(mapEl, { zoomControl: true }).setView([allStops[0].lat, allStops[0].lng], 13);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    maxZoom: 19,
+  }).addTo(mapInstance);
+
+  const colors = ['#0770e3','#059669','#d97706','#7c3aed','#dc2626'];
+  allStops.forEach((stop, i) => {
+    const color = colors[i % colors.length];
+    const icon = L.divIcon({
+      html: `<div style="background:${color};width:28px;height:28px;border-radius:50%;border:3px solid white;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:white;font-family:sans-serif;box-shadow:0 2px 8px rgba(0,0,0,.25);">${i + 1}</div>`,
+      className: '', iconSize: [28,28], iconAnchor: [14,14], popupAnchor: [0,-16],
+    });
+    L.marker([stop.lat, stop.lng], { icon })
+      .addTo(mapInstance)
+      .bindPopup(`<strong>${stop.name}</strong><br><span style="color:#6b7280;font-size:.78rem;">${stop.time || ''} &middot; ${stop.price_estimate || ''}</span>`);
+  });
+
+  if (allStops.length > 1) {
+    mapInstance.fitBounds(allStops.map(s => [s.lat, s.lng]), { padding: [30,30], maxZoom: 15 });
+  }
+  setTimeout(() => { if (mapInstance) mapInstance.invalidateSize(); }, 200);
+}
+
+// ── Flights ───────────────────────────────────────────────────────────────────
+async function autoSearchFlights(plan) {
+  const iata = plan.destination_iata;
+  if (!iata) return;
+  const origin = document.getElementById('f-origin').value || 'BCN';
+  const date   = document.getElementById('f-date').value;
+  if (!date) return;
+
+  document.getElementById('sky-origin').value = origin;
+  document.getElementById('sky-dest').value   = iata;
+  document.getElementById('sky-date').value   = date;
+  document.getElementById('flights-list').innerHTML = '<p style="color:var(--muted);font-size:.85rem;">Searching for flights...</p>';
+  document.getElementById('flights-title').textContent = `Flights ${origin} to ${iata}`;
+
+  const returnDate = document.getElementById('f-return').value || '';
+  await fetchFlights(origin, iata, date, 1, currentSortBy, returnDate);
+}
+
+async function searchFlightsManual() {
+  const origin     = (document.getElementById('sky-origin').value || 'BCN').toUpperCase().trim();
+  const dest       = (document.getElementById('sky-dest').value   || '').toUpperCase().trim();
+  const date       = document.getElementById('sky-date').value;
+  const returnDate = document.getElementById('sky-return').value || '';
+  const adults     = parseInt(document.getElementById('sky-adults').value) || 1;
+
+  if (!dest || !date) return alert('Please enter a destination (IATA code) and a date.');
+
+  currentDestIata = dest;
+  document.getElementById('flights-title').textContent = `Flights ${origin} to ${dest}`;
+  document.getElementById('flights-list').innerHTML = '<p style="color:var(--muted);font-size:.85rem;">Searching...</p>';
+
+  showResults();
+  await fetchFlights(origin, dest, date, adults, currentSortBy, returnDate);
+  loadHotelsAndCars(dest, date, returnDate || date);
+}
+
+async function fetchFlights(origin, dest, date, adults, sortBy, returnDate = '') {
+  try {
+    const url = `/api/flights?origin=${origin}&destination=${dest}&date=${date}&adults=${adults}&sort_by=${sortBy}&return_date=${returnDate}`;
+    const res  = await fetch(url);
+    const data = await res.json();
+
+    const notice = document.getElementById('sky-mock-notice');
+    if (data.mock || data.warning) {
+      notice.style.display = 'block';
+      notice.textContent = data.warning || 'Showing sample data. Add a Skyscanner API key for live prices.';
+    } else {
+      notice.style.display = 'none';
+    }
+
+    if (!data.success && data.error && !data.flights?.length) {
+      document.getElementById('flights-list').innerHTML = `
+        <div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;padding:1rem;color:#dc2626;font-size:.85rem;">
+          ${data.error}
+          ${data.tip ? `<br><span style="color:var(--muted);font-size:.78rem;">${data.tip}</span>` : ''}
+        </div>`;
+      return;
+    }
+
+    allFlights = data.flights || [];
+    renderFlights(allFlights, data);
+  } catch(e) {
+    document.getElementById('flights-list').innerHTML = '<p style="color:#dc2626;font-size:.85rem;">Connection error. Please try again.</p>';
+  }
+}
+
+function renderFlights(flights, meta) {
+  const el = document.getElementById('flights-list');
+  if (!flights.length) {
+    el.innerHTML = '<p style="color:var(--muted);font-size:.85rem;">No flights found for this route and date.</p>';
+    return;
+  }
+
+  const mockBadge  = meta?.mock ? '<span class="mock-badge">SAMPLE</span>' : '';
+  const skyLink    = `https://www.skyscanner.com/transport/flights/${(meta?.origin||'').toLowerCase()}/${(meta?.destination||'').toLowerCase()}/`;
+  const isRoundTrip = meta?.return_date
+    ? '<br><span style="font-size:0.7rem;background:#e0e7ff;color:#3730a3;padding:2px 6px;border-radius:4px;margin-top:4px;display:inline-block;border:1px solid #c7d2fe;">Round Trip</span>'
+    : '';
+  const disc = window.userDiscount || 0;
+
+  el.innerHTML = flights.map(f => {
+    let priceLabel = f.price_label;
+    if (disc > 0 && f.price_eur) {
+      const discounted = Math.round(f.price_eur * (1 - disc/100));
+      priceLabel = `<span style="text-decoration:line-through;color:var(--muted);font-size:.75rem;font-weight:400;">${f.price_label}</span> <span style="color:#059669;">€${discounted}</span>`;
+    }
+    return `
+    <div class="flight-card">
+      <span class="fc-airline">${f.airline}${mockBadge}</span>
+      <span class="fc-times">
+        <span>${f.departure} &rarr; ${f.arrival}</span>
+        <span style="color:var(--muted);">${f.duration_label}</span>
+        ${isRoundTrip}
+      </span>
+      <span class="fc-stops${f.stops === 0 ? ' direct' : ''}">${f.stops_label}</span>
+      <span class="fc-price">${priceLabel}</span>
+      ${f.deep_link
+        ? `<a href="${f.deep_link}" target="_blank" rel="noopener" class="fc-link">Book</a>`
+        : `<a href="${skyLink}" target="_blank" rel="noopener" class="fc-link">Skyscanner</a>`}
+    </div>`;
+  }).join('');
+}
+
+function sortFlights(sortBy, btn) {
+  currentSortBy = sortBy;
+  document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  if (!allFlights.length) return;
+  let sorted = [...allFlights];
+  if (sortBy === 'price')    sorted.sort((a,b) => a.price_eur - b.price_eur);
+  if (sortBy === 'duration') sorted.sort((a,b) => a.duration_min - b.duration_min);
+  if (sortBy === 'stops')    sorted.sort((a,b) => a.stops - b.stops || a.price_eur - b.price_eur);
+  renderFlights(sorted, {});
+}
+
+// ── Hotels + Cars ─────────────────────────────────────────────────────────────
+async function autoSearchHotelsAndCars(plan) {
+  const iata = plan.destination_iata;
+  if (!iata) return;
+  const checkin  = document.getElementById('f-date').value;
+  const checkout = document.getElementById('f-return').value || checkin;
+  await loadHotelsAndCars(iata, checkin, checkout);
+}
+
+async function loadHotelsAndCars(dest, checkin, checkout) {
+  try {
+    const [hotRes, carRes] = await Promise.all([
+      fetch(`/api/hotels?destination=${dest}&checkin=${checkin}&checkout=${checkout}&adults=2`),
+      fetch(`/api/cars?destination=${dest}&pickup_date=${checkin}&dropoff_date=${checkout}`),
+    ]);
+    const hotels = await hotRes.json();
+    const cars   = await carRes.json();
+
+    document.getElementById('hotels-list').innerHTML =
+      (hotels.hotels || []).map(h => `
+        <div class="hotel-card">
+          <div>
+            <div class="hc-name">${h.name}</div>
+            <div class="hc-meta">${'★'.repeat(h.stars||3)} &nbsp;${h.rating ? `Rating: ${h.rating}/10` : ''}</div>
+            <a href="${h.deep_link||'https://www.skyscanner.com/hotels'}" target="_blank" class="hc-link">View on Skyscanner</a>
+          </div>
+          <div class="hc-price">${h.price}<span style="font-size:.7rem;font-weight:400;color:var(--muted);">/night</span></div>
+        </div>`).join('') || '<p style="color:var(--muted);font-size:.82rem;">No hotel data available.</p>';
+
+    document.getElementById('cars-list').innerHTML =
+      (cars.cars || []).map(c => `
+        <div class="car-card">
+          <div>
+            <div class="hc-name">${c.name}</div>
+            <div class="hc-meta">${c.category} &middot; ${c.provider}</div>
+            <a href="${c.deep_link||'https://www.skyscanner.com/cars'}" target="_blank" class="hc-link">Book</a>
+          </div>
+          <div class="hc-price">${c.price}</div>
+        </div>`).join('') || '<p style="color:var(--muted);font-size:.82rem;">No car hire data available.</p>';
+
+    document.getElementById('hotels-cars').style.display = 'block';
+  } catch(e) { console.error('Hotels/cars error:', e); }
+}
+
+// ── Community ─────────────────────────────────────────────────────────────────
+async function renderCommunity(city) {
+  if (!city) return;
+  const el = document.getElementById('community-content');
+  el.innerHTML = '<p style="color:var(--muted);font-size:.85rem;">Loading community experiences...</p>';
+
+  try {
+    const res  = await fetch(`/api/community?city=${encodeURIComponent(city)}`);
+    const data = await res.json();
+
+    let html = `<h3 style="font-family:'Sora',sans-serif;font-size:1.2rem;color:var(--blue-dark);margin-bottom:1.2rem;">Community in ${city}</h3>`;
+
+    if (data.experiences?.length) {
+      html += data.experiences.map(e => `
+        <div class="comm-exp">
+          <div class="comm-exp__header">
+            <span class="comm-exp__user">@${e.username}</span>
+            <span class="comm-exp__rating">${'★'.repeat(e.rating || 5)}</span>
+          </div>
+          <div class="comm-exp__city">${e.city} &middot; ${e.created_at || ''}</div>
+          ${e.title ? `<strong style="font-size:.88rem;display:block;margin-bottom:.25rem;">${e.title}</strong>` : ''}
+          <div class="comm-exp__text">${e.text}</div>
+        </div>`).join('');
+    } else {
+      html += `<p style="color:var(--muted);font-size:.85rem;">No experiences yet for this destination.
+        <a href="/input" style="color:var(--blue);font-weight:600;">Be the first to share one.</a></p>`;
+    }
+
+    if (data.photos?.length) {
+      html += `<h4 style="font-size:.73rem;color:var(--blue);text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin:1.5rem 0 .75rem;">Community photos</h4>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:.75rem;margin-bottom:1rem;">`;
+      html += data.photos.map(p => `
+        <div style="border-radius:8px;overflow:hidden;border:1px solid var(--border);cursor:pointer;position:relative;"
+             onclick="openCommLightbox('image','${p.photo_url}','${p.title} — @${p.username}')">
+          <img src="${p.photo_url}" alt="${p.title}"
+            style="width:100%;height:90px;object-fit:cover;display:block;"
+            onerror="this.parentElement.style.display='none'">
+          <div style="padding:.35rem .5rem;font-size:.72rem;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.title}</div>
+          <div style="padding:0 .5rem .35rem;font-size:.68rem;color:var(--muted);">@${p.username}</div>
+        </div>`).join('');
+      html += '</div>';
+    }
+
+    if (data.videos?.length) {
+      html += `<h4 style="font-size:.73rem;color:var(--blue);text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin:1.5rem 0 .75rem;">Community videos</h4>
+        <div class="video-grid">`;
+      html += data.videos.map(v => `
+        <div class="vid-card">
+          <div style="position:relative;cursor:pointer;overflow:hidden;border-radius:8px 8px 0 0;background:#0f172a;"
+               onclick="openCommLightbox('video','${v.original_url}','${v.title}')">
+            <video src="${v.original_url}" muted preload="metadata"
+              style="width:100%;height:90px;object-fit:cover;display:block;"></video>
+            <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;">
+              <div style="width:32px;height:32px;background:rgba(255,255,255,.85);border-radius:50%;display:flex;align-items:center;justify-content:center;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="#0770e3"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              </div>
+            </div>
+          </div>
+          <div class="vid-card__info">
+            <div class="vid-card__title">${v.title}</div>
+            <div class="vid-card__user">@${v.username} &middot; ${v.created_at || ''}</div>
+            <div class="vid-card__links">
+              ${v.original_url ? `<span class="vid-btn vid-btn-orig" style="cursor:pointer;" onclick="openCommLightbox('video','${v.original_url}','${v.title}')">▶ Play</span>` : ''}
+              ${v.vr_ready && v.vr_url ? `<span class="vid-btn vid-btn-vr" style="cursor:pointer;" onclick="openCommLightbox('video','${v.vr_url}','VR: ${v.title}')">VR</span>` : ''}
+            </div>
+          </div>
+        </div>`).join('');
+      html += '</div>';
+    }
+
+    el.innerHTML = html;
+  } catch(e) {
+    el.innerHTML = '<p style="color:#dc2626;font-size:.85rem;">Error loading community data.</p>';
+  }
+}
+
+// ── Community Lightbox con viewer 360 ─────────────────────────────────────────
+const commLb = document.getElementById('comm-lightbox');
+
+document.getElementById('comm-lb-close').addEventListener('click', closeCommLightbox);
+commLb.addEventListener('click', e => { if (e.target === commLb) closeCommLightbox(); });
+
+function closeCommLightbox() {
+  commLb.classList.remove('open');
+  commLb.style.display = 'none';
+  const vid = document.getElementById('comm-lb-video');
+  vid.pause(); vid.src = '';
+  if (viewer360.animFrame) { cancelAnimationFrame(viewer360.animFrame); viewer360.animFrame = null; }
+  viewer360.img = null; viewer360.srcData = null;
+}
+
+function openCommLightbox(type, url, label) {
+  const wrap360 = document.getElementById('comm-lb-360-wrap');
+  const imgFlat = document.getElementById('comm-lb-img');
+  const vid     = document.getElementById('comm-lb-video');
+
+  wrap360.style.display = 'none';
+  imgFlat.style.display = 'none';
+  vid.style.display     = 'none';
+  document.getElementById('comm-lb-label').textContent = label || '';
+
+  if (type === 'video') {
+    vid.src = url;
+    vid.style.display = '';
+  } else {
+    const image = new Image();
+    image.crossOrigin = 'anonymous';
+    image.onload = () => {
+
+      const offC = document.createElement('canvas');
+      offC.width = image.width; offC.height = image.height;
+      offC.getContext('2d').drawImage(image, 0, 0);
+      viewer360.img     = image;
+      viewer360.srcData = offC.getContext('2d').getImageData(0, 0, image.width, image.height).data;
+      viewer360.iW      = image.width;
+      viewer360.iH      = image.height;
+      viewer360.yaw     = 0;
+      viewer360.pitch   = 0;
+      viewer360.fov     = 70;
+      viewer360.initialized = false;
+      wrap360.style.display = 'block';
+      init360Canvas();
+      render360Loop();
+    };
+    image.onerror = () => { imgFlat.src = url; imgFlat.style.display = ''; };
+    image.src = url;
+  }
+
+  commLb.style.display = 'flex';
+  commLb.classList.add('open');
+}
+
+function init360Canvas() {
+  if (viewer360.initialized) return;
+  viewer360.initialized = true;
+  const canvas = document.getElementById('comm-lb-canvas');
+
+  canvas.addEventListener('mousedown', e => {
+    viewer360.dragging = true;
+    viewer360.lastX = e.clientX; viewer360.lastY = e.clientY;
+    canvas.style.cursor = 'grabbing';
+  });
+  window.addEventListener('mouseup', () => { viewer360.dragging = false; canvas.style.cursor = 'grab'; });
+  window.addEventListener('mousemove', e => {
+    if (!viewer360.dragging || !viewer360.img) return;
+    viewer360.yaw   -= (e.clientX - viewer360.lastX) * 0.25;
+    viewer360.pitch  = Math.max(-85, Math.min(85, viewer360.pitch - (e.clientY - viewer360.lastY) * 0.25));
+    viewer360.lastX  = e.clientX; viewer360.lastY = e.clientY;
+  });
+  canvas.addEventListener('wheel', e => {
+    e.preventDefault();
+    viewer360.fov = Math.max(30, Math.min(110, viewer360.fov + e.deltaY * 0.05));
+  }, { passive: false });
+
+  let lx = 0, ly = 0;
+  canvas.addEventListener('touchstart', e => { lx = e.touches[0].clientX; ly = e.touches[0].clientY; });
+  canvas.addEventListener('touchmove', e => {
+    e.preventDefault();
+    if (!viewer360.img) return;
+    viewer360.yaw   -= (e.touches[0].clientX - lx) * 0.3;
+    viewer360.pitch  = Math.max(-85, Math.min(85, viewer360.pitch - (e.touches[0].clientY - ly) * 0.3));
+    lx = e.touches[0].clientX; ly = e.touches[0].clientY;
+  }, { passive: false });
+}
+
+function render360Loop() {
+  if (viewer360.animFrame) cancelAnimationFrame(viewer360.animFrame);
+  if (!viewer360.img || !commLb.classList.contains('open')) return;
+
+  const canvas = document.getElementById('comm-lb-canvas');
+  const rect   = canvas.getBoundingClientRect();
+  if (canvas.width !== Math.round(rect.width * devicePixelRatio)) {
+    canvas.width  = Math.round(rect.width  * devicePixelRatio);
+    canvas.height = Math.round(rect.height * devicePixelRatio);
+  }
+
+  const ctx  = canvas.getContext('2d');
+  const W    = canvas.width, H = canvas.height;
+  const srcData = viewer360.srcData;
+  const iW   = viewer360.iW, iH = viewer360.iH;
+
+  const fovRad   = viewer360.fov   * Math.PI / 180;
+  const yawRad   = viewer360.yaw   * Math.PI / 180;
+  const pitchRad = viewer360.pitch * Math.PI / 180;
+  const halfFov  = fovRad / 2;
+  const aspect   = W / H;
+  const cp = Math.cos(pitchRad), sp = Math.sin(pitchRad);
+  const cy = Math.cos(yawRad),   sy = Math.sin(yawRad);
+
+  const imageData = ctx.createImageData(W, H);
+
+  for (let py = 0; py < H; py++) {
+    for (let px = 0; px < W; px++) {
+      const nx = (px/W - 0.5) * 2;
+      const ny = (0.5 - py/H) * 2;
+      const rx = nx * Math.tan(halfFov) * aspect;
+      const ry = ny * Math.tan(halfFov);
+      const len = Math.sqrt(rx*rx + ry*ry + 1);
+      let dx = rx/len, dy = ry/len, dz = 1/len;
+      const dy2 = dy*cp - dz*sp, dz2 = dy*sp + dz*cp;
+      dy = dy2; dz = dz2;
+      const dx2 = dx*cy + dz2*sy, dz3 = -dx*sy + dz2*cy;
+      dx = dx2; dz = dz3;
+      const theta = Math.atan2(dx, dz);
+      const phi   = Math.asin(Math.max(-1, Math.min(1, dy)));
+      const u  = (theta / (2 * Math.PI) + 0.5);
+      const v  = (0.5 - phi / Math.PI);
+      const sx = ((Math.floor(u * iW) % iW) + iW) % iW;
+      const sy2= Math.min(Math.floor(v * iH), iH - 1);
+      const si = (sy2 * iW + sx) * 4;
+      const di = (py * W + px) * 4;
+      imageData.data[di]   = srcData[si];
+      imageData.data[di+1] = srcData[si+1];
+      imageData.data[di+2] = srcData[si+2];
+      imageData.data[di+3] = 255;
+    }
+  }
+  ctx.putImageData(imageData, 0, 0);
+  viewer360.animFrame = requestAnimationFrame(render360Loop);
+}
+
+// ── User discount ─────────────────────────────────────────────────────────────
+window.userDiscount = 0;
+(async () => {
+  try {
+    const res  = await fetch('/api/user-discount');
+    const data = await res.json();
+    if (data.has_discount) {
+      window.userDiscount = data.discount_pct;
+      const banner = document.getElementById('discount-banner');
+      document.getElementById('discount-text').textContent =
+        `You have a ${data.discount_pct}% loyalty discount (${data.points} pts)`;
+      banner.style.display = 'block';
+    }
+  } catch(e) {}
+})();
+</script>
+</body>
+</html>
