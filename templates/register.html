@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WanderLens — Create account</title>
+  <link rel="stylesheet" href="/static/css/main.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Sora:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+<body style="background:#fff;">
+
+<div class="auth-page">
+
+  <!-- LEFT PANEL (desktop only) -->
+  <div class="auth-left"
+    style="background:
+      linear-gradient(160deg, rgba(0, 24, 90, 0.88) 0%, rgba(11, 107, 186, 0.8) 100%),
+      url('https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=900&q=80') center/cover no-repeat;">
+    <div class="auth-left__content">
+      <div style="font-family:'Sora',sans-serif;font-size:1.4rem;font-weight:700;color:#fff;margin-bottom:2rem;">WanderLens</div>
+      <h2 class="auth-left__title">The world is big.<br>Start exploring it.</h2>
+      <p class="auth-left__sub">Create your free account and get personalised itineraries, real-time flights, and a community of fellow travellers — all in one place.</p>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="auth-right">
+    <div class="auth-box">
+
+      <a href="/" class="auth-box__logo">
+        <span class="auth-box__logo-icon" style="font-family:'Sora',sans-serif;font-weight:800;font-size:1.3rem;color:var(--blue);">W</span>
+        <span class="auth-box__logo-text">WanderLens</span>
+      </a>
+
+      <h2>Create your account</h2>
+      <p class="auth-sub">Free forever. No credit card required.</p>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for cat, msg in messages %}
+          <div class="flash-msg flash-{{ cat }}" style="margin-bottom:1rem;">{{ msg }}</div>
+        {% endfor %}
+      {% endwith %}
+
+      <form method="POST">
+        <div class="form-group">
+          <label>Username</label>
+          <input class="form-control" type="text" name="username" placeholder="choose_a_username" required autocomplete="username" minlength="3">
+        </div>
+        <div class="form-group">
+          <label>Password <span style="font-weight:400;color:var(--muted);font-size:.82rem;">(min. 6 characters)</span></label>
+          <input class="form-control" type="password" name="password" placeholder="Choose a strong password" required autocomplete="new-password" minlength="6">
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%;padding:.85rem;font-size:.95rem;margin-top:.5rem;">
+          Create account
+        </button>
+      </form>
+
+      <div class="auth-divider">or</div>
+
+      <div class="auth-footer">
+        Already have an account? <a href="/login">Sign in</a><br>
+        <br>
+        <a href="/" style="color:var(--muted);font-size:.82rem;">Back to home</a>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

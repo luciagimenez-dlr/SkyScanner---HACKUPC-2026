@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WanderLens — My Profile</title>
+  <link rel="stylesheet" href="/static/css/main.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Sora:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    .profile-header {
+      background: linear-gradient(135deg, #0a2a6e 0%, #0770e3 100%);
+      padding: 5rem 2rem 4rem; margin-bottom: 0;
+    }
+    .profile-header-inner {
+      max-width: 900px; margin: 0 auto;
+      display: flex; align-items: center; gap: 2rem; flex-wrap: wrap;
+    }
+    .profile-avatar {
+      width: 80px; height: 80px; border-radius: 50%;
+      background: rgba(255,255,255,.2); border: 3px solid rgba(255,255,255,.4);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Sora', sans-serif; font-size: 2rem; font-weight: 700; color: #fff;
+      flex-shrink: 0;
+    }
+    .profile-header-info h1 { color: #fff; margin: 0 0 .3rem; font-size: 1.6rem; }
+    .profile-header-info p { color: rgba(255,255,255,.7); margin: 0; font-size: .9rem; }
+    .profile-stats { display: flex; gap: 2rem; margin-top: 1rem; flex-wrap: wrap; }
+    .pstat { text-align: center; }
+    .pstat__num { font-family: 'Sora', sans-serif; font-size: 1.6rem; font-weight: 700; color: #fff; }
+    .pstat__label { font-size: .72rem; color: rgba(255,255,255,.6); text-transform: uppercase; letter-spacing: .1em; }
+
+    .profile-body { max-width: 900px; margin: 0 auto; padding: 3rem 2rem 5rem; }
+
+    .section-card {
+      background: #fff; border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 2rem 2.2rem;
+      margin-bottom: 1.8rem; box-shadow: var(--shadow-card);
+    }
+    .section-card h3 {
+      font-size: 1rem; font-weight: 700; color: var(--text);
+      margin: 0 0 1.4rem; padding-bottom: .8rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .points-bar-wrap {
+      background: var(--blue-dim); border-radius: var(--radius);
+      padding: 1.4rem 1.6rem; border: 1px solid var(--blue-line); margin-bottom: 1.6rem;
+    }
+    .points-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; }
+    .points-big { font-family: 'Sora', sans-serif; font-size: 2.2rem; font-weight: 800; color: var(--blue); }
+    .points-label { font-size: .82rem; color: var(--muted); font-weight: 500; }
+    .points-progress { background: rgba(7,112,227,.12); border-radius: 20px; height: 8px; margin-top: 1rem; overflow: hidden; }
+    .points-progress-fill { background: var(--blue); height: 100%; border-radius: 20px; transition: width .6s ease; }
+    .points-goal { font-size: .78rem; color: var(--muted); margin-top: .5rem; }
+
+    .danger-zone { border-color: #fca5a5; }
+    .danger-zone h3 { color: var(--danger); border-bottom-color: #fecaca; }
+
+    .pw-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:1000; align-items:center; justify-content:center; }
+    .pw-modal.open { display:flex; }
+    .pw-modal-box {
+      background:#fff; border-radius:var(--radius); padding:2.2rem;
+      width:100%; max-width:420px; box-shadow:var(--shadow-md);
+      animation: modalIn .22s ease;
+    }
+    @keyframes modalIn { from{opacity:0;transform:scale(.97)}to{opacity:1;transform:scale(1)} }
+    .pw-modal-box h3 { margin:0 0 1.4rem; color:var(--text); font-size:1.2rem; }
+
+    .del-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:1000; align-items:center; justify-content:center; }
+    .del-modal.open { display:flex; }
+    .del-modal-box {
+      background:#fff; border-radius:var(--radius); padding:2.2rem;
+      width:100%; max-width:420px; box-shadow:var(--shadow-md);
+      animation: modalIn .22s ease;
+    }
+    .del-modal-box h3 { margin:0 0 .6rem; color:var(--danger); }
+
+    .tab-btn {
+      background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+      padding: .45rem 1.1rem; font-size: .85rem; font-weight: 600; color: var(--muted);
+      cursor: pointer; transition: all .18s; font-family: inherit;
+    }
+    .tab-btn.active, .tab-btn:hover { background: var(--blue); border-color: var(--blue); color: #fff; }
+
+    .content-item {
+      border: 1px solid var(--border); border-radius: 10px; padding: 1.2rem 1.4rem;
+      margin-bottom: 1rem; background: var(--bg);
+      display: flex; gap: 1rem; align-items: flex-start;
+    }
+    .content-item__main { flex: 1; min-width: 0; }
+    .content-item__title { font-weight: 700; font-size: .92rem; color: var(--text); margin: 0 0 .25rem; }
+    .content-item__meta  { font-size: .78rem; color: var(--muted); margin: 0 0 .4rem; }
+    .content-item__text  { font-size: .85rem; color: var(--text); line-height: 1.6; margin: .4rem 0 0; }
+    .content-item__actions { display: flex; gap: .5rem; flex-shrink: 0; flex-wrap: wrap; }
+    .btn-sm {
+      padding: .35rem .85rem; font-size: .78rem; font-weight: 600; border-radius: 6px;
+      cursor: pointer; border: none; font-family: inherit; transition: opacity .15s;
+    }
+    .btn-sm:hover { opacity: .85; }
+    .btn-edit    { background: var(--blue-light); color: var(--blue); border: 1px solid var(--blue); }
+    .btn-delete  { background: #fef2f2; color: var(--danger); border: 1px solid #fca5a5; }
+    .btn-preview { background: #f0fdf4; color: #059669; border: 1px solid #6ee7b7; }
+
+    .media-thumb {
+      width: 90px; height: 68px; object-fit: cover; border-radius: 6px;
+      flex-shrink: 0; border: 1px solid var(--border); background: var(--border);
+    }
+    .media-thumb-wrap {
+      width: 90px; height: 68px; border-radius: 6px; flex-shrink: 0;
+      border: 1px solid var(--border); background: #0f172a;
+      display: flex; align-items: center; justify-content: center;
+      color: rgba(255,255,255,.5); font-size: .7rem; cursor: pointer; overflow: hidden;
+    }
+    .media-thumb-wrap video { width: 100%; height: 100%; object-fit: cover; }
+
+    .edit-form { display:none; margin-top:.75rem; }
+    .edit-form input, .edit-form textarea {
+      width: 100%; box-sizing: border-box; border: 1px solid var(--border);
+      border-radius: 6px; padding: .55rem .75rem; font-size: .85rem; font-family: inherit;
+      margin-bottom: .5rem; outline: none; transition: border-color .2s;
+    }
+    .edit-form input:focus, .edit-form textarea:focus { border-color: var(--blue); }
+    .edit-form textarea { min-height: 80px; resize: vertical; }
+    .edit-actions { display: flex; gap: .5rem; }
+
+    /* Lightbox con soporte 360 */
+    .lightbox {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,.88);
+      z-index: 2000; align-items: center; justify-content: center; flex-direction: column;
+    }
+    .lightbox.open { display: flex; }
+    .lightbox__close {
+      position: absolute; top: 1.2rem; right: 1.5rem; color: #fff; font-size: 1.8rem;
+      cursor: pointer; line-height: 1; background: none; border: none;
+    }
+    .lightbox__label { color: rgba(255,255,255,.7); font-size: .82rem; margin-top: .75rem; }
+  </style>
+</head>
+<body>
+
+<nav class="nav">
+  <a href="/" class="nav__logo">
+    <span class="nav__logo-icon" style="font-family:'Sora',sans-serif;font-weight:800;">W</span>
+    <span class="nav__logo-text">WanderLens</span>
+  </a>
+  <div class="nav__links">
+    <a href="/search" class="nav__link">Plan a Trip</a>
+    <a href="/input"  class="nav__link">Share</a>
+    <a href="/perfil" class="nav__link active">Profile: {{ user.username }}</a>
+    <a href="/logout" class="nav__link">Sign out</a>
+  </div>
+</nav>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  <div class="flash-container">
+    {% for cat, msg in messages %}
+      <div class="flash-msg flash-{{ cat }}">{{ msg }}</div>
+    {% endfor %}
+  </div>
+{% endwith %}
+
+<div style="margin-top:64px;">
+  <div class="profile-header">
+    <div class="profile-header-inner">
+      <div class="profile-avatar">{{ user.username[0].upper() }}</div>
+      <div class="profile-header-info">
+        <h1>{{ user.username }}</h1>
+        <p>Member since {{ user.created_at.strftime('%B %Y') }}</p>
+        <div class="profile-stats">
+          <div class="pstat">
+            <div class="pstat__num">{{ user.points }}</div>
+            <div class="pstat__label">Points</div>
+          </div>
+          <div class="pstat">
+            <div class="pstat__num">{{ user.experience_count }}</div>
+            <div class="pstat__label">Experiences</div>
+          </div>
+          <div class="pstat">
+            <div class="pstat__num">{{ user.video_count }}</div>
+            <div class="pstat__label">Videos</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="profile-body">
+
+  <div class="points-bar-wrap">
+    <div class="points-row">
+      <div>
+        <div class="points-big">{{ user.points }}</div>
+        <div class="points-label">reward points</div>
+      </div>
+      <div style="text-align:right;">
+        {% if user.points >= 300 %}
+          <span class="badge badge-green">Flight discount active!</span>
+        {% elif user.points >= 100 %}
+          <span class="badge badge-blue">{{ 300 - user.points }} pts to flight discount</span>
+        {% else %}
+          <span class="badge badge-blue">{{ 300 - user.points }} pts to first reward</span>
+        {% endif %}
+      </div>
+    </div>
+    <div class="points-progress">
+      <div class="points-progress-fill"></div>
+    </div>
+    <div class="points-goal">Reach <strong>300 points</strong> to unlock a 10% flight discount. +20 pts per experience · +30 pts per photo · +50 pts per video.</div>
+  </div>
+
+  <div class="section-card" id="my-content-card">
+    <h3>My content</h3>
+    <div style="display:flex;gap:.5rem;margin-bottom:1.5rem;flex-wrap:wrap;">
+      <button class="tab-btn active" onclick="switchTab('experiences')">Experiences</button>
+      <button class="tab-btn" onclick="switchTab('photos')">Photos</button>
+      <button class="tab-btn" onclick="switchTab('videos')">Videos</button>
+    </div>
+
+    <div id="tab-experiences">
+      <div id="exp-list"><p style="color:var(--muted);font-size:.9rem;">Loading…</p></div>
+    </div>
+    <div id="tab-photos" style="display:none;">
+      <div id="photo-list"><p style="color:var(--muted);font-size:.9rem;">Loading…</p></div>
+    </div>
+    <div id="tab-videos" style="display:none;">
+      <div id="video-list"><p style="color:var(--muted);font-size:.9rem;">Loading…</p></div>
+    </div>
+  </div>
+
+  <div class="section-card">
+    <h3>Travel preferences</h3>
+    <form method="POST">
+      <div class="form-group">
+        <label>Travel style</label>
+        <input class="form-control" type="text" name="travel_style"
+               value="{{ user.travel_style }}"
+               placeholder="e.g. cultural, adventure, food, budget, luxury">
+      </div>
+      <div class="form-group">
+        <label>Accessibility needs</label>
+        <input class="form-control" type="text" name="accessibility_needs"
+               value="{{ user.accessibility_needs }}"
+               placeholder="e.g. wheelchair access, no stairs, quiet environments">
+      </div>
+      <div class="form-group">
+        <label>Budget preference</label>
+        <select class="form-control" name="budget_preference">
+          <option value="baix"  {% if user.budget_preference == 'baix'  %}selected{% endif %}>Budget</option>
+          <option value="mitjà" {% if user.budget_preference == 'mitjà' %}selected{% endif %}>Mid-range</option>
+          <option value="alt"   {% if user.budget_preference == 'alt'   %}selected{% endif %}>Premium</option>
+          <option value="luxe"  {% if user.budget_preference == 'luxe'  %}selected{% endif %}>Luxury</option>
+        </select>
+      </div>
+      <button type="submit" class="btn btn-primary">Save preferences</button>
+    </form>
+  </div>
+
+  <div class="section-card">
+    <h3>Account security</h3>
+    <p style="color:var(--muted);font-size:.9rem;margin:0 0 1.2rem;">Keep your account secure by using a strong, unique password.</p>
+    <button class="btn btn-secondary" onclick="document.getElementById('pwModal').classList.add('open')">
+      Change password
+    </button>
+  </div>
+
+  <div class="section-card danger-zone">
+    <h3>Danger zone</h3>
+    <p style="color:var(--muted);font-size:.9rem;margin:0 0 1.4rem;">
+      Deleting your account is permanent. All your experiences, videos, and points will be lost and cannot be recovered.
+    </p>
+    <button class="btn btn-danger" onclick="document.getElementById('delModal').classList.add('open')">
+      Delete my account
+    </button>
+  </div>
+
+</div>
+
+<!-- CHANGE PASSWORD MODAL -->
+<div class="pw-modal" id="pwModal">
+  <div class="pw-modal-box">
+    <h3>Change password</h3>
+    <form method="POST" action="/change-password">
+      <div class="form-group">
+        <label>Current password</label>
+        <input class="form-control" type="password" name="current_password" required placeholder="Your current password">
+      </div>
+      <div class="form-group">
+        <label>New password <span style="font-weight:400;color:var(--muted);">(min. 6 characters)</span></label>
+        <input class="form-control" type="password" name="new_password" required minlength="6" placeholder="Choose a new password">
+      </div>
+      <div class="form-group">
+        <label>Confirm new password</label>
+        <input class="form-control" type="password" name="confirm_password" required placeholder="Repeat new password">
+      </div>
+      <div style="display:flex;gap:.75rem;margin-top:1.2rem;">
+        <button type="submit" class="btn btn-primary">Update password</button>
+        <button type="button" class="btn btn-secondary" onclick="document.getElementById('pwModal').classList.remove('open')">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- DELETE ACCOUNT MODAL -->
+<div class="del-modal" id="delModal">
+  <div class="del-modal-box">
+    <h3>Delete account</h3>
+    <p style="color:var(--muted);font-size:.9rem;margin:0 0 1.4rem;line-height:1.6;">
+      This will permanently delete your account, all experiences, videos, and reward points.
+      This action cannot be undone. Type your username to confirm.
+    </p>
+    <form method="POST" action="/delete-account">
+      <div class="form-group">
+        <label>Type <strong>{{ user.username }}</strong> to confirm</label>
+        <input class="form-control" type="text" name="confirm_username" required
+               placeholder="{{ user.username }}"
+               pattern="{{ user.username }}" title="Must match your username exactly">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input class="form-control" type="password" name="password" required placeholder="Your password">
+      </div>
+      <div style="display:flex;gap:.75rem;margin-top:1.2rem;">
+        <button type="submit" class="btn btn-danger">Delete my account permanently</button>
+        <button type="button" class="btn btn-secondary" onclick="document.getElementById('delModal').classList.remove('open')">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- LIGHTBOX con viewer 360 -->
+<div class="lightbox" id="lightbox">
+  <button class="lightbox__close" id="lb-close">&times;</button>
+
+  <!-- Contenedor 360 (fotos panorámicas) -->
+  <div id="lb-360-wrap" style="display:none;width:90vw;max-width:860px;position:relative;">
+    <div style="font-size:.72rem;color:rgba(255,255,255,.5);margin-bottom:.4rem;text-align:center;letter-spacing:.06em;text-transform:uppercase;">
+      Drag to explore · Scroll to zoom
+    </div>
+    <canvas id="lb-canvas" style="width:100%;height:60vh;border-radius:10px;display:block;cursor:grab;background:#0f172a;"></canvas>
+  </div>
+
+  <!-- Imagen plana (fotos normales) -->
+  <img id="lb-img" src="" alt="" style="display:none;max-width:90vw;max-height:80vh;border-radius:10px;object-fit:contain;">
+
+  <!-- Vídeo -->
+  <video id="lb-video" src="" controls autoplay style="display:none;max-width:90vw;max-height:80vh;border-radius:10px;"></video>
+
+  <div class="lightbox__label" id="lb-label"></div>
+</div>
+
+<script>
+// ── Modals ────────────────────────────────────────────────────────────────────
+document.getElementById('pwModal').addEventListener('click', function(e) {
+  if (e.target === this) this.classList.remove('open');
+});
+document.getElementById('delModal').addEventListener('click', function(e) {
+  if (e.target === this) this.classList.remove('open');
+});
+
+setTimeout(() => {
+  document.querySelectorAll('.flash-msg').forEach(el => {
+    el.style.transition = 'opacity .5s';
+    el.style.opacity = '0';
+    setTimeout(() => el.remove(), 500);
+  });
+}, 5000);
+
+// ── Content tabs ──────────────────────────────────────────────────────────────
+let contentData = null;
+
+function switchTab(tab) {
+  ['experiences','photos','videos'].forEach(t => {
+    document.getElementById('tab-'+t).style.display = t === tab ? '' : 'none';
+  });
+  document.querySelectorAll('.tab-btn').forEach((btn, i) => {
+    btn.classList.toggle('active', ['experiences','photos','videos'][i] === tab);
+  });
+}
+
+// ── 360 viewer state ──────────────────────────────────────────────────────────
+let viewer360 = {
+  img: null, srcData: null, iW: 0, iH: 0,
+  yaw: 0, pitch: 0, fov: 70,
+  dragging: false, lastX: 0, lastY: 0,
+  animFrame: null, initialized: false
+};
+
+// ── Lightbox con viewer 360 ───────────────────────────────────────────────────
+const lb = document.getElementById('lightbox');
+
+document.getElementById('lb-close').addEventListener('click', closeLightbox);
+lb.addEventListener('click', e => { if (e.target === lb) closeLightbox(); });
+
+function closeLightbox() {
+  lb.classList.remove('open');
+  const vid = document.getElementById('lb-video');
+  vid.pause(); vid.src = '';
+  if (viewer360.animFrame) { cancelAnimationFrame(viewer360.animFrame); viewer360.animFrame = null; }
+  viewer360.img = null; viewer360.srcData = null;
+}
+
+function openLightbox(type, url, label) {
+  const wrap360 = document.getElementById('lb-360-wrap');
+  const imgFlat = document.getElementById('lb-img');
+  const vid     = document.getElementById('lb-video');
+
+  wrap360.style.display = 'none';
+  imgFlat.style.display = 'none';
+  vid.style.display     = 'none';
+  document.getElementById('lb-label').textContent = label || '';
+
+  if (type === 'video') {
+    vid.src = url;
+    vid.style.display = '';
+  } else {
+    const image = new Image();
+    image.crossOrigin = 'anonymous';
+    image.onload = () => {
+      const offC = document.createElement('canvas');
+      offC.width = image.width; offC.height = image.height;
+      offC.getContext('2d').drawImage(image, 0, 0);
+      viewer360.img     = image;
+      viewer360.srcData = offC.getContext('2d').getImageData(0, 0, image.width, image.height).data;
+      viewer360.iW      = image.width;
+      viewer360.iH      = image.height;
+      viewer360.yaw     = 0;
+      viewer360.pitch   = 0;
+      viewer360.fov     = 70;
+      viewer360.initialized = false;
+      wrap360.style.display = 'block';
+      init360Canvas();
+      render360Loop();
+    };
+    image.onerror = () => { imgFlat.src = url; imgFlat.style.display = ''; };
+    image.src = url;
+  }
+
+  lb.classList.add('open');
+}
+
+function init360Canvas() {
+  if (viewer360.initialized) return;
+  viewer360.initialized = true;
+  const canvas = document.getElementById('lb-canvas');
+
+  canvas.addEventListener('mousedown', e => {
+    viewer360.dragging = true;
+    viewer360.lastX = e.clientX; viewer360.lastY = e.clientY;
+    canvas.style.cursor = 'grabbing';
+  });
+  window.addEventListener('mouseup', () => { viewer360.dragging = false; canvas.style.cursor = 'grab'; });
+  window.addEventListener('mousemove', e => {
+    if (!viewer360.dragging || !viewer360.img) return;
+    viewer360.yaw   -= (e.clientX - viewer360.lastX) * 0.25;
+    viewer360.pitch  = Math.max(-85, Math.min(85, viewer360.pitch - (e.clientY - viewer360.lastY) * 0.25));
+    viewer360.lastX  = e.clientX; viewer360.lastY = e.clientY;
+  });
+  canvas.addEventListener('wheel', e => {
+    e.preventDefault();
+    viewer360.fov = Math.max(30, Math.min(110, viewer360.fov + e.deltaY * 0.05));
+  }, { passive: false });
+
+  let lx = 0, ly = 0;
+  canvas.addEventListener('touchstart', e => { lx = e.touches[0].clientX; ly = e.touches[0].clientY; });
+  canvas.addEventListener('touchmove', e => {
+    e.preventDefault();
+    if (!viewer360.img) return;
+    viewer360.yaw   -= (e.touches[0].clientX - lx) * 0.3;
+    viewer360.pitch  = Math.max(-85, Math.min(85, viewer360.pitch - (e.touches[0].clientY - ly) * 0.3));
+    lx = e.touches[0].clientX; ly = e.touches[0].clientY;
+  }, { passive: false });
+}
+
+function render360Loop() {
+  if (viewer360.animFrame) cancelAnimationFrame(viewer360.animFrame);
+  if (!viewer360.img || !lb.classList.contains('open')) return;
+
+  const canvas = document.getElementById('lb-canvas');
+  const rect   = canvas.getBoundingClientRect();
+  if (canvas.width !== Math.round(rect.width * devicePixelRatio)) {
+    canvas.width  = Math.round(rect.width  * devicePixelRatio);
+    canvas.height = Math.round(rect.height * devicePixelRatio);
+  }
+
+  const ctx  = canvas.getContext('2d');
+  const W    = canvas.width, H = canvas.height;
+  const srcData = viewer360.srcData;
+  const iW   = viewer360.iW, iH = viewer360.iH;
+
+  const fovRad   = viewer360.fov   * Math.PI / 180;
+  const yawRad   = viewer360.yaw   * Math.PI / 180;
+  const pitchRad = viewer360.pitch * Math.PI / 180;
+  const halfFov  = fovRad / 2;
+  const aspect   = W / H;
+  const cp = Math.cos(pitchRad), sp = Math.sin(pitchRad);
+  const cy = Math.cos(yawRad),   sy = Math.sin(yawRad);
+
+  const imageData = ctx.createImageData(W, H);
+
+  for (let py = 0; py < H; py++) {
+    for (let px = 0; px < W; px++) {
+      const nx = (px/W - 0.5) * 2;
+      const ny = (0.5 - py/H) * 2;
+      const rx = nx * Math.tan(halfFov) * aspect;
+      const ry = ny * Math.tan(halfFov);
+      const len = Math.sqrt(rx*rx + ry*ry + 1);
+      let dx = rx/len, dy = ry/len, dz = 1/len;
+      const dy2 = dy*cp - dz*sp, dz2 = dy*sp + dz*cp;
+      dy = dy2; dz = dz2;
+      const dx2 = dx*cy + dz2*sy, dz3 = -dx*sy + dz2*cy;
+      dx = dx2; dz = dz3;
+      const theta = Math.atan2(dx, dz);
+      const phi   = Math.asin(Math.max(-1, Math.min(1, dy)));
+      const u  = (theta / (2 * Math.PI) + 0.5);
+      const v  = (0.5 - phi / Math.PI);
+      const sx = ((Math.floor(u * iW) % iW) + iW) % iW;
+      const sy2= Math.min(Math.floor(v * iH), iH - 1);
+      const si = (sy2 * iW + sx) * 4;
+      const di = (py * W + px) * 4;
+      imageData.data[di]   = srcData[si];
+      imageData.data[di+1] = srcData[si+1];
+      imageData.data[di+2] = srcData[si+2];
+      imageData.data[di+3] = 255;
+    }
+  }
+  ctx.putImageData(imageData, 0, 0);
+  viewer360.animFrame = requestAnimationFrame(render360Loop);
+}
+
+// ── Load & render content ─────────────────────────────────────────────────────
+async function loadMyContent() {
+  try {
+    const res  = await fetch('/input/my-content');
+    contentData = await res.json();
+    renderExperiences(contentData.experiences || []);
+    renderPhotos(contentData.photos || []);
+    renderVideos(contentData.videos || []);
+  } catch(e) {
+    document.getElementById('exp-list').innerHTML = '<p style="color:#dc2626;font-size:.9rem;">Error loading content.</p>';
+  }
+}
+
+function renderExperiences(exps) {
+  const el = document.getElementById('exp-list');
+  if (!exps.length) {
+    el.innerHTML = '<p style="color:var(--muted);font-size:.9rem;">No experiences yet. <a href="/input" style="color:var(--blue);">Share your first one!</a></p>';
+    return;
+  }
+  el.innerHTML = exps.map(e => `
+    <div class="content-item" id="exp-item-${e.id}">
+      <div class="content-item__main">
+        <div class="content-item__title">${e.title || e.city}</div>
+        <div class="content-item__meta">${e.city} · ${'★'.repeat(e.rating||5)} · ${e.created_at}</div>
+        <div class="content-item__text">${e.text.slice(0,160)}${e.text.length>160?'…':''}</div>
+        <div class="edit-form" id="edit-exp-${e.id}">
+          <input type="text" id="edit-exp-city-${e.id}" value="${escHtml(e.city)}" placeholder="City">
+          <input type="text" id="edit-exp-title-${e.id}" value="${escHtml(e.title||'')}" placeholder="Title">
+          <textarea id="edit-exp-text-${e.id}">${escHtml(e.text)}</textarea>
+          <div class="edit-actions">
+            <button class="btn-sm btn-edit" onclick="saveExp(${e.id})">Save</button>
+            <button class="btn-sm" style="background:var(--border);color:var(--muted);" onclick="toggleEditExp(${e.id})">Cancel</button>
+          </div>
+        </div>
+      </div>
+      <div class="content-item__actions">
+        <button class="btn-sm btn-edit" onclick="toggleEditExp(${e.id})">Edit</button>
+        <button class="btn-sm btn-delete" onclick="deleteExp(${e.id})">Delete</button>
+      </div>
+    </div>`).join('');
+}
+
+function renderPhotos(photos) {
+  const el = document.getElementById('photo-list');
+  if (!photos.length) {
+    el.innerHTML = '<p style="color:var(--muted);font-size:.9rem;">No photos yet. <a href="/input" style="color:var(--blue);">Upload your first photo!</a></p>';
+    return;
+  }
+  el.innerHTML = photos.map(p => `
+    <div class="content-item" id="photo-item-${p.id}">
+      <div class="media-thumb-wrap" onclick="openLightbox('image','${p.photo_url}','${escHtml(p.title)}')">
+        <img src="${p.photo_url}" style="width:100%;height:100%;object-fit:cover;" alt="${escHtml(p.title)}" onerror="this.style.display='none'">
+      </div>
+      <div class="content-item__main">
+        <div class="content-item__title">${p.title}</div>
+        <div class="content-item__meta">${p.city} · ${p.created_at}</div>
+      </div>
+      <div class="content-item__actions">
+        <button class="btn-sm btn-preview" onclick="openLightbox('image','${p.photo_url}','${escHtml(p.title)}')">Preview</button>
+        <button class="btn-sm btn-delete" onclick="deletePhoto(${p.id})">Delete</button>
+      </div>
+    </div>`).join('');
+}
+
+function renderVideos(videos) {
+  const el = document.getElementById('video-list');
+  if (!videos.length) {
+    el.innerHTML = '<p style="color:var(--muted);font-size:.9rem;">No videos yet. <a href="/input" style="color:var(--blue);">Upload your first video!</a></p>';
+    return;
+  }
+  el.innerHTML = videos.map(v => `
+    <div class="content-item" id="video-item-${v.id}">
+      <div class="media-thumb-wrap" onclick="openLightbox('video','${v.original_url}','${escHtml(v.title)}')">
+        <video src="${v.original_url}" muted preload="metadata" style="width:100%;height:100%;object-fit:cover;"></video>
+      </div>
+      <div class="content-item__main">
+        <div class="content-item__title">${v.title}</div>
+        <div class="content-item__meta">${v.city} · ${v.created_at}${v.vr_ready ? ' · <span style="color:#059669;font-weight:600;">VR ✓</span>' : ''}</div>
+        ${v.description ? `<div class="content-item__text">${v.description}</div>` : ''}
+      </div>
+      <div class="content-item__actions">
+        <button class="btn-sm btn-preview" onclick="openLightbox('video','${v.original_url}','${escHtml(v.title)}')">Preview</button>
+        ${v.vr_ready && v.vr_url ? `<button class="btn-sm btn-preview" onclick="openLightbox('video','${v.vr_url}','VR: ${escHtml(v.title)}')">VR</button>` : ''}
+        <button class="btn-sm btn-delete" onclick="deleteVideo(${v.id})">Delete</button>
+      </div>
+    </div>`).join('');
+}
+
+// ── Edit experience ───────────────────────────────────────────────────────────
+function toggleEditExp(id) {
+  const f = document.getElementById('edit-exp-'+id);
+  f.style.display = f.style.display === 'none' || !f.style.display ? 'block' : 'none';
+}
+
+async function saveExp(id) {
+  const city  = document.getElementById(`edit-exp-city-${id}`).value.trim();
+  const title = document.getElementById(`edit-exp-title-${id}`).value.trim();
+  const text  = document.getElementById(`edit-exp-text-${id}`).value.trim();
+  try {
+    const res  = await fetch(`/input/experience/${id}`, {
+      method: 'PUT', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({city, title, text}),
+    });
+    const data = await res.json();
+    if (data.success) { await loadMyContent(); showToast('Experience updated!'); }
+    else showToast(data.error || 'Error saving.');
+  } catch(e) { showToast('Network error.'); }
+}
+
+// ── Delete helpers ─────────────────────────────────────────────────────────────
+async function deleteExp(id) {
+  if (!confirm('Delete this experience? You will lose 20 points.')) return;
+  const res  = await fetch(`/input/experience/${id}`, {method:'DELETE'});
+  const data = await res.json();
+  if (data.success) { showToast(data.message); await loadMyContent(); }
+}
+
+async function deletePhoto(id) {
+  if (!confirm('Delete this photo? You will lose 30 points.')) return;
+  const res  = await fetch(`/input/photo/${id}`, {method:'DELETE'});
+  const data = await res.json();
+  if (data.success) { showToast(data.message); await loadMyContent(); }
+}
+
+async function deleteVideo(id) {
+  if (!confirm('Delete this video? You will lose 50 points.')) return;
+  const res  = await fetch(`/input/video/${id}`, {method:'DELETE'});
+  const data = await res.json();
+  if (data.success) { showToast(data.message); await loadMyContent(); }
+}
+
+// ── Utilities ─────────────────────────────────────────────────────────────────
+function escHtml(str) {
+  return (str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function showToast(msg) {
+  const t = document.createElement('div');
+  t.textContent = msg;
+  Object.assign(t.style, {
+    position:'fixed', bottom:'1.5rem', right:'1.5rem', background:'#1e293b',
+    color:'#fff', padding:'.85rem 1.3rem', borderRadius:'8px', fontSize:'.88rem',
+    fontWeight:'600', zIndex:'9999', boxShadow:'0 4px 16px rgba(0,0,0,.18)',
+    transition:'opacity .4s',
+  });
+  document.body.appendChild(t);
+  setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 400); }, 3000);
+}
+
+loadMyContent();
+</script>
+</body>
+</html>

@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WanderLens — Plan. Discover. Share.</title>
+  <link rel="stylesheet" href="/static/css/main.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Sora:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* ── Hero override with real photo ─── */
+    .hero {
+      min-height: 100vh;
+      background:
+        linear-gradient(160deg, rgba(10,42,110,.82) 0%, rgba(7,112,227,.72) 55%, rgba(0,165,207,.65) 100%),
+        url('https://images.unsplash.com/photo-1488085061387-422e29b40080?w=1800&q=80') center/cover no-repeat;
+    }
+    .hero > * { position: relative; z-index: 1; }
+
+    /* ── Airline-logo strip ─── */
+    .partner-strip {
+      background: #fff; padding: 1.6rem 2rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .partner-strip__inner {
+      max-width: 960px; margin: 0 auto;
+      display: flex; align-items: center; gap: 2.5rem; flex-wrap: wrap; justify-content: center;
+    }
+    .partner-strip__label {
+      font-size: .72rem; text-transform: uppercase; letter-spacing: .14em;
+      color: var(--subtle); font-weight: 600; white-space: nowrap;
+    }
+    .partner-logos { display: flex; gap: 2rem; align-items: center; flex-wrap: wrap; }
+    .partner-logo {
+      font-size: .82rem; font-weight: 700; color: var(--muted);
+      letter-spacing: .04em; opacity: .65; transition: opacity .2s;
+    }
+    .partner-logo:hover { opacity: 1; }
+
+    /* ── Testimonial strip ─── */
+    .testimonials {
+      background: var(--blue-light); padding: 5rem 2rem;
+    }
+    .testimonials-grid {
+      max-width: 1000px; margin: 2.5rem auto 0;
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem;
+    }
+    .testimonial-card {
+      background: #fff; border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 1.8rem;
+      box-shadow: var(--shadow);
+    }
+    .testimonial-card__text {
+      color: var(--text); font-size: .92rem; line-height: 1.7;
+      margin: 0 0 1.2rem; font-style: italic;
+    }
+    .testimonial-card__author {
+      display: flex; align-items: center; gap: .75rem;
+    }
+    .testimonial-card__avatar {
+      width: 38px; height: 38px; border-radius: 50%;
+      background: var(--blue); color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .85rem; font-weight: 700;
+    }
+    .testimonial-card__name { font-weight: 600; font-size: .88rem; color: var(--text); }
+    .testimonial-card__meta { font-size: .78rem; color: var(--muted); }
+
+    /* ── CTA section ─── */
+    .cta-section {
+      background: linear-gradient(135deg, #0a2a6e 0%, #0770e3 100%);
+      padding: 7rem 2rem; text-align: center; position: relative; overflow: hidden;
+    }
+    .cta-section::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 50% 50%, rgba(255,255,255,.06) 0%, transparent 60%);
+    }
+    .cta-section > * { position: relative; z-index: 1; }
+    .cta-section h2 { color: #fff; font-size: clamp(1.6rem, 4vw, 2.4rem); margin-bottom: 1rem; }
+    .cta-section p { color: rgba(255,255,255,.75); max-width: 500px; margin: 0 auto 2.5rem; line-height: 1.7; }
+
+    /* ── Footer ─── */
+    footer {
+      background: #0f172a; color: rgba(255,255,255,.5);
+      padding: 3rem 2rem 2rem; font-size: .82rem;
+    }
+    .footer-inner {
+      max-width: 1160px; margin: 0 auto;
+      display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2rem;
+    }
+    @media(max-width:700px) { .footer-inner { grid-template-columns: 1fr; } }
+    .footer-col__title {
+      font-size: .75rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .12em; color: rgba(255,255,255,.35); margin-bottom: 1rem;
+    }
+    .footer-col a {
+      display: block; color: rgba(255,255,255,.55); text-decoration: none;
+      margin-bottom: .5rem; transition: color .18s;
+    }
+    .footer-col a:hover { color: #fff; }
+    .footer-bottom {
+      border-top: 1px solid rgba(255,255,255,.08); margin-top: 2.5rem;
+      padding-top: 1.5rem; text-align: center;
+    }
+    .footer-logo { font-family: 'Sora', sans-serif; font-weight: 700; color: #fff; font-size: 1.1rem; }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <a href="/" class="nav__logo">
+    <span class="nav__logo-icon">W</span>
+    <span class="nav__logo-text">WanderLens</span>
+  </a>
+  <div class="nav__links">
+    <a href="/search" class="nav__link">Plan a Trip</a>
+    <a href="/input"  class="nav__link">Share</a>
+    {% if current_user.is_authenticated %}
+      <a href="/perfil" class="nav__link">Profile: {{ current_user.username }}</a>
+      <a href="/logout" class="nav__link">Sign out</a>
+    {% else %}
+      <a href="/login"    class="nav__link">Sign in</a>
+      <a href="/register" class="nav__link nav__link--btn">Get started</a>
+    {% endif %}
+  </div>
+</nav>
+
+<!-- FLASH -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+  <div class="flash-container">
+    {% for cat, msg in messages %}
+      <div class="flash-msg flash-{{ cat }}">{{ msg }}</div>
+    {% endfor %}
+  </div>
+{% endwith %}
+
+<!-- HERO -->
+<section class="hero">
+  <div style="max-width:680px; margin:0 auto; padding: 2rem; position:relative; z-index:1;">
+    <p class="hero__kicker">AI-powered travel planning</p>
+    <h1 class="hero__title">
+      Travel smarter.<br>
+      <span>Share the journey.</span><br>
+      Earn rewards.
+    </h1>
+    <p class="hero__sub">
+      WanderLens combines advanced AI, real-time flight data, personalized itineraries,
+      and a community of travellers who share immersive VR videos.
+    </p>
+    <div class="hero__cta">
+      <a href="/search" class="btn btn-white btn-lg">Plan my trip</a>
+      <a href="/register" class="btn btn-outline-white btn-lg">Create free account</a>
+    </div>
+  </div>
+</section>
+
+<!-- PARTNER STRIP -->
+<div class="partner-strip">
+  <div class="partner-strip__inner">
+    <span class="partner-strip__label">Powered by</span>
+    <div class="partner-logos">
+      <span class="partner-logo">Skyscanner</span>
+      <span class="partner-logo">Gemini AI</span>
+      <span class="partner-logo">OpenStreetMap</span>
+      <span class="partner-logo">Leaflet Maps</span>
+    </div>
+  </div>
+</div>
+
+<!-- STATS -->
+<div class="stats-row">
+  <div class="stat">
+    <span class="stat__num">AI</span>
+    <span class="stat__label">Gemini 2.5 Flash</span>
+  </div>
+  <div class="stat">
+    <span class="stat__num">VR</span>
+    <span class="stat__label">Immersive videos</span>
+  </div>
+  <div class="stat">
+    <span class="stat__num">Live</span>
+    <span class="stat__label">Real-time flights</span>
+  </div>
+  <div class="stat">
+    <span class="stat__num">Free</span>
+    <span class="stat__label">Always free to use</span>
+  </div>
+</div>
+
+<!-- FEATURES -->
+<section class="section">
+  <div class="section-inner">
+    <p class="section-kicker">Everything you need</p>
+    <h2 class="section-title">All your travel tools in one place</h2>
+    <p class="section-sub">From AI-generated itineraries to real-time flights and a global community of travellers.</p>
+    <div class="features-grid" style="padding: 2.5rem 0; max-width: 100%;">
+
+      <div class="feature-card">
+        <div class="feature-card__icon">AI</div>
+        <h3 class="feature-card__title">AI Trip Planner</h3>
+        <p class="feature-card__text">Chat with Gemini AI to generate day-by-day personalised itineraries, complete with stops, timings, and cultural tips.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-card__icon" style="font-size:.9rem;font-weight:700;">FLY</div>
+        <h3 class="feature-card__title">Real Flights</h3>
+        <p class="feature-card__text">Search and compare live flights via Skyscanner. Sort by price, duration, or stops and book directly.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-card__icon" style="font-size:.9rem;font-weight:700;">BED</div>
+        <h3 class="feature-card__title">Hotels & Cars</h3>
+        <p class="feature-card__text">Find accommodation and rental cars integrated into your itinerary. Prices sourced directly from Skyscanner.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-card__icon" style="font-size:.9rem;font-weight:700;">VR</div>
+        <h3 class="feature-card__title">VR Videos</h3>
+        <p class="feature-card__text">Upload travel videos and the app converts them automatically to VR side-by-side format. Earn 50 points per video.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-card__icon" style="font-size:.9rem;font-weight:700;">MAP</div>
+        <h3 class="feature-card__title">Interactive Map</h3>
+        <p class="feature-card__text">Visualise itinerary stops on a live map with points of interest, powered by OpenStreetMap.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-card__icon" style="font-size:.9rem;font-weight:700;">COM</div>
+        <h3 class="feature-card__title">Community</h3>
+        <p class="feature-card__text">Read experiences from other travellers and watch their videos for every destination you plan to visit.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="section section--alt">
+  <div class="section-inner">
+    <p class="section-kicker">How it works</p>
+    <h2 class="section-title">Up and running in four steps</h2>
+    <div class="how-grid">
+      <div class="how-step">
+        <div class="how-step__num">1</div>
+        <div class="how-step__title">Create an account</div>
+        <div class="how-step__text">Sign up for free and set your travel preferences and accessibility needs.</div>
+      </div>
+      <div class="how-step">
+        <div class="how-step__num">2</div>
+        <div class="how-step__title">Chat with AI</div>
+        <div class="how-step__text">Describe where you want to go and when. The AI generates a complete itinerary in seconds.</div>
+      </div>
+      <div class="how-step">
+        <div class="how-step__num">3</div>
+        <div class="how-step__title">Book your trip</div>
+        <div class="how-step__text">Compare flights, hotels, and cars directly from within the itinerary via Skyscanner.</div>
+      </div>
+      <div class="how-step">
+        <div class="how-step__num">4</div>
+        <div class="how-step__title">Share and earn</div>
+        <div class="how-step__text">Return, upload your video in VR format, and earn points for your next adventure.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- CTA -->
+<section class="cta-section">
+  <p class="section-kicker" style="color:rgba(255,255,255,.6);">Join today</p>
+  <h2>Start travelling smarter</h2>
+  <p>Sign up for free and get your first personalised itinerary in under 30 seconds.</p>
+  <a href="/register" class="btn btn-white btn-lg">Create your free account</a>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-col">
+      <div class="footer-logo">WanderLens</div>
+      <p style="margin:.75rem 0 0;line-height:1.6;">AI-powered travel planning for the modern explorer.</p>
+    </div>
+    <div class="footer-col">
+      <div class="footer-col__title">Product</div>
+      <a href="/search">Plan a Trip</a>
+      <a href="/input">Share Experience</a>
+      <a href="/register">Sign up</a>
+    </div>
+    <div class="footer-col">
+      <div class="footer-col__title">About</div>
+      <a href="#">Built at HackUPC 2025</a>
+      <a href="/api/health">API Status</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    &copy; 2025 WanderLens. Built with care for HackUPC 2025.
+  </div>
+</footer>
+
+<script>
+// Auto-dismiss flash messages
+setTimeout(() => {
+  document.querySelectorAll('.flash-msg').forEach(el => {
+    el.style.transition = 'opacity .5s';
+    el.style.opacity = '0';
+    setTimeout(() => el.remove(), 500);
+  });
+}, 5000);
+</script>
+</body>
+</html>

@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Share your journey — WanderLens</title>
+  <link rel="stylesheet" href="/static/css/main.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Sora:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      /* Colores profesionales del segundo diseño */
+      --blue: #0770e3;
+      --blue-dark: #0a2a6e;
+      --blue-light: #f0f6ff;
+      --blue-hover: #065ab5;
+      --text: #1e293b;
+      --muted: #64748b;
+      --subtle: #94a3b8;
+      --border: #e2e8f0;
+      --bg: #f8fafc;
+      --radius: 12px;
+      --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+      --gold: #eab308; /* Para las estrellas */
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* ── Nav ── */
+    .nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 1rem 2rem;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+    }
+    .nav__logo { display: flex; align-items: center; gap: 0.5rem; text-decoration: none; color: var(--blue-dark); }
+    .nav__logo-icon { font-weight: 700; font-size: 1.2rem; color: var(--blue); font-family: 'Sora', sans-serif; }
+    .nav__logo-text { font-family: 'Sora', sans-serif; font-weight: 700; font-size: 1.1rem; }
+    .nav__links { display: flex; gap: 1.5rem; align-items: center; }
+    .nav__link { color: var(--muted); text-decoration: none; font-size: 0.9rem; font-weight: 500; transition: color 0.2s; }
+    .nav__link:hover, .nav__link.active { color: var(--blue); }
+    .nav__link--btn { background: var(--blue); color: #fff; padding: 0.5rem 1rem; border-radius: 8px; font-weight: 600; }
+    .nav__link--btn:hover { background: var(--blue-hover); color: #fff; }
+
+    /* ── Layout ── */
+    .container { max-width: 1000px; margin: 100px auto 4rem; padding: 0 1.5rem; }
+    
+    .page-header { text-align: center; margin-bottom: 3rem; }
+    .page-kicker { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--blue); font-weight: 700; margin-bottom: 0.5rem; }
+    .page-header h1 { font-family: 'Sora', sans-serif; font-size: 2.2rem; color: var(--blue-dark); margin: 0 0 0.5rem; }
+    .page-header p { color: var(--muted); font-size: 1rem; max-width: 600px; margin: 0 auto; line-height: 1.6; }
+
+    /* ── Hints & Points ── */
+    .auth-hint { background: var(--blue-light); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.2rem; text-align: center; margin-bottom: 2rem; color: var(--blue-dark); font-size: 0.95rem; }
+    .auth-hint a { color: var(--blue); font-weight: 600; text-decoration: none; }
+    .auth-hint a:hover { text-decoration: underline; }
+
+    .points-bar { background: #fff; border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem 2rem; margin-bottom: 2rem; display: flex; align-items: center; justify-content: space-between; gap: 2rem; flex-wrap: wrap; box-shadow: var(--shadow); }
+    .points-bar__score { font-family: 'Sora', sans-serif; font-size: 2.2rem; color: var(--blue); font-weight: 700; line-height: 1; }
+    .points-bar__label { font-size: 0.85rem; color: var(--muted); margin-top: 0.2rem; font-weight: 500; }
+    .points-progress { flex: 1; min-width: 200px; }
+    .progress-track { background: var(--border); border-radius: 6px; height: 8px; overflow: hidden; margin-top: 0.6rem; }
+    .progress-fill { background: linear-gradient(90deg, var(--blue) 0%, #00a5cf 100%); height: 100%; border-radius: 6px; transition: width 0.5s ease; }
+    .progress-label { font-size: 0.8rem; color: var(--muted); margin-top: 0.5rem; font-weight: 500; }
+    .points-legend { text-align: right; font-size: 0.85rem; color: var(--muted); line-height: 1.6; background: var(--bg); padding: 0.8rem 1.2rem; border-radius: 8px; border: 1px solid var(--border); }
+
+    /* ── Cards & Forms ── */
+    .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 3rem; }
+    @media(max-width: 768px) { .input-grid { grid-template-columns: 1fr; } }
+    
+    .card { background: #fff; border: 1px solid var(--border); border-radius: var(--radius); padding: 2rem; box-shadow: var(--shadow); }
+    .card h3 { font-family: 'Sora', sans-serif; font-size: 1.1rem; color: var(--blue-dark); margin: 0 0 1.5rem; display: flex; align-items: center; gap: 0.5rem; }
+
+    .form-field { margin-bottom: 1.2rem; }
+    .form-field label { display: block; font-size: 0.85rem; color: var(--text); font-weight: 600; margin-bottom: 0.4rem; }
+    .form-field input, .form-field textarea {
+      width: 100%; background: #fff; border: 1px solid var(--border); color: var(--text);
+      padding: 0.75rem 1rem; border-radius: 8px; font-family: inherit; font-size: 0.95rem;
+      box-sizing: border-box; outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .form-field input:focus, .form-field textarea:focus { border-color: var(--blue); box-shadow: 0 0 0 3px var(--blue-light); }
+    .form-field textarea { resize: vertical; min-height: 100px; }
+    
+    .star-rating { display: flex; gap: 0.2rem; margin-top: 0.2rem; }
+    .star-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--border); transition: color 0.2s, transform 0.1s; padding: 0; }
+    .star-btn.active { color: var(--gold); }
+    .star-btn:active { transform: scale(0.9); }
+
+    .btn-submit { width: 100%; padding: 0.9rem; background: var(--blue); color: #fff; border: none; border-radius: 8px; font-weight: 600; font-size: 1rem; cursor: pointer; transition: background 0.2s; margin-top: 1rem; font-family: inherit; }
+    .btn-submit:hover { background: var(--blue-hover); }
+    .btn-submit:disabled { background: var(--subtle); cursor: not-allowed; }
+
+    /* ── Drop zone ── */
+    .drop-zone { border: 2px dashed var(--subtle); border-radius: 8px; padding: 2.5rem 1rem; text-align: center; cursor: pointer; transition: all 0.2s; background: var(--bg); }
+    .drop-zone:hover, .drop-zone.drag-over { border-color: var(--blue); background: var(--blue-light); }
+    .drop-zone__icon { font-size: 2.5rem; margin-bottom: 0.8rem; color: var(--blue); }
+    .drop-zone__text { color: var(--muted); font-size: 0.9rem; line-height: 1.4; }
+    .drop-zone__text strong { color: var(--blue-dark); font-weight: 600; }
+    #video-file { display: none; }
+    .video-preview { margin-top: 1rem; background: var(--blue-light); border: 1px solid #cce0ff; border-radius: 8px; padding: 0.8rem 1rem; font-size: 0.85rem; color: var(--blue-dark); display: none; font-weight: 500; }
+
+    .upload-progress { margin-top: 1rem; display: none; }
+    .upload-status { font-size: 0.8rem; color: var(--muted); margin-top: 0.5rem; font-weight: 500; }
+
+    /* ── Leaderboard ── */
+    .leaderboard { background: #fff; border: 1px solid var(--border); border-radius: var(--radius); padding: 2rem; box-shadow: var(--shadow); }
+    .leaderboard h3 { font-family: 'Sora', sans-serif; font-size: 1.1rem; color: var(--blue-dark); margin: 0 0 1.5rem; }
+    .lb-row { display: flex; align-items: center; gap: 1rem; padding: 0.8rem 0; border-bottom: 1px solid var(--border); }
+    .lb-row:last-child { border-bottom: none; }
+    .lb-rank { width: 2rem; font-size: 0.9rem; color: var(--muted); font-weight: 600; text-align: center; background: var(--bg); padding: 0.2rem; border-radius: 4px; }
+    .lb-username { flex: 1; font-size: 0.95rem; font-weight: 600; color: var(--text); }
+    .lb-meta { font-size: 0.8rem; color: var(--muted); }
+    .lb-pts { font-size: 0.95rem; color: var(--blue); font-weight: 700; background: var(--blue-light); padding: 0.3rem 0.6rem; border-radius: 20px; }
+
+    /* ── Toast ── */
+    .toast { position: fixed; bottom: 2rem; right: 2rem; background: var(--text); color: #fff; padding: 1rem 1.5rem; border-radius: 8px; z-index: 9999; font-size: 0.9rem; font-weight: 500; box-shadow: var(--shadow); transform: translateY(150%); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+    .toast.show { transform: translateY(0); }
+
+    /* ── Footer ── */
+    footer { background: #0f172a; color: rgba(255,255,255,0.6); padding: 4rem 2rem 2rem; font-size: 0.85rem; margin-top: 4rem; }
+    .footer-inner { max-width: 1000px; margin: 0 auto; display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 3rem; }
+    @media(max-width: 768px) { .footer-inner { grid-template-columns: 1fr; gap: 2rem; } }
+    .footer-col__title { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: rgba(255,255,255,0.4); margin-bottom: 1.2rem; }
+    .footer-col a { display: block; color: rgba(255,255,255,0.7); text-decoration: none; margin-bottom: 0.75rem; transition: color 0.2s; }
+    .footer-col a:hover { color: #fff; }
+    .footer-bottom { border-top: 1px solid rgba(255,255,255,0.1); margin-top: 3rem; padding-top: 1.5rem; text-align: center; max-width: 1000px; margin-left: auto; margin-right: auto; }
+    .footer-logo { font-family: 'Sora', sans-serif; font-weight: 700; color: #fff; font-size: 1.2rem; }
+  </style>
+</head>
+<body>
+
+<nav class="nav">
+  <a href="/" class="nav__logo">
+    <span class="nav__logo-icon">W</span>
+    <span class="nav__logo-text">WanderLens</span>
+  </a>
+  <div class="nav__links">
+    <a href="/search" class="nav__link">Plan a Trip</a>
+    <a href="/input" class="nav__link active">Share</a>
+    {% if current_user.is_authenticated %}
+      <a href="/perfil" class="nav__link">
+  {% if current_user.username %}
+    Profile: {{ current_user.username }}
+  {% else %}
+    Profile
+  {% endif %}
+</a>
+      <a href="/logout" class="nav__link">Sign out</a>
+    {% else %}
+      <a href="/login" class="nav__link">Sign in</a>
+      <a href="/register" class="nav__link nav__link--btn">Sign up</a>
+    {% endif %}
+  </div>
+</nav>
+
+<main class="container">
+  <div class="page-header">
+    <div class="page-kicker">Community</div>
+    <h1>Share your journey</h1>
+    <p>Write about your travels, upload immersive videos, and earn reward points towards exclusive discounts on your next trip.</p>
+  </div>
+
+  {% if not current_user.is_authenticated %}
+  <div class="auth-hint">
+    You need an account to earn points with your posts.
+    <a href="/login">Sign in</a> or <a href="/register">create a free account</a>.
+  </div>
+  {% endif %}
+
+  <div class="points-bar">
+    <div>
+      <div class="points-bar__score" id="pts-display">{{ points }}</div>
+      <div class="points-bar__label">Points earned</div>
+    </div>
+    <div class="points-progress">
+      <div style="font-size: 0.85rem; font-weight: 600; color: var(--blue-dark); display: flex; justify-content: space-between;">
+        <span>Reward progress</span>
+        <span>300 pts</span>
+      </div>
+      <div class="progress-track"><div class="progress-fill" id="pts-bar"></div></div>
+      <div class="progress-label" id="pts-hint">{{ [300-points,0]|max }} pts to unlock a discount</div>
+    </div>
+    <div class="points-legend">
+      <div style="margin-bottom: 0.3rem;">New experience: <strong>+{{ points_config.review_submitted }} pts</strong></div>
+      <div style="margin-bottom: 0.3rem;">Photo upload: <strong>+{{ points_config.photo_uploaded }} pts</strong></div>
+      <div>VR video upload: <strong>+{{ points_config.vr_video_uploaded }} pts</strong></div>
+    </div>
+  </div>
+
+    <div class="points-legend" style="margin-bottom:1.5rem;">
+      <div style="display:flex;gap:2rem;flex-wrap:wrap;font-size:0.85rem;color:var(--muted);">
+        <span>Write a review: <strong style="color:var(--text);">+{{ points_config.review_submitted }} pts</strong></span>
+        <span>Upload a photo: <strong style="color:var(--text);">+{{ points_config.photo_uploaded }} pts</strong></span>
+        <span>Upload a video: <strong style="color:var(--text);">+{{ points_config.vr_video_uploaded }} pts</strong></span>
+      </div>
+    </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:1.5rem;margin-bottom:3rem;">
+
+    <!-- EXPERIENCE CARD -->
+    <div class="card">
+      <h3 style="display:flex;align-items:center;gap:.6rem;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+        Write an experience
+      </h3>
+      <div class="form-field">
+        <label>City visited *</label>
+        <input type="text" id="exp-city" placeholder="e.g. Tokyo, Barcelona, Rome…">
+      </div>
+      <div class="form-field">
+        <label>Title</label>
+        <input type="text" id="exp-title" placeholder="e.g. Autumn magic in Japan">
+      </div>
+      <div class="form-field">
+        <label>Your experience *</label>
+        <textarea id="exp-text" placeholder="Share tips, highlights, must-see places… (min. 20 characters)"></textarea>
+      </div>
+      <div class="form-field">
+        <label>Overall rating</label>
+        <div class="star-rating" id="star-rating">
+          <button class="star-btn active" data-val="1">★</button>
+          <button class="star-btn active" data-val="2">★</button>
+          <button class="star-btn active" data-val="3">★</button>
+          <button class="star-btn active" data-val="4">★</button>
+          <button class="star-btn active" data-val="5">★</button>
+        </div>
+        <input type="hidden" id="exp-rating" value="5">
+      </div>
+      <button class="btn-submit" id="btn-exp" onclick="submitExperience()">Publish experience (+20 pts)</button>
+    </div>
+
+    <!-- 360 PHOTO VIEWER CARD -->
+    <div class="card">
+      <h3 style="display:flex;align-items:center;gap:.6rem;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        360 Photo Viewer
+      </h3>
+      <p style="font-size:.85rem;color:var(--muted);margin:0 0 1.2rem;line-height:1.6;">Upload a panoramic or 360 photo and explore it interactively in your browser.</p>
+
+      <div class="form-field">
+        <label>Panoramic image</label>
+        <div class="drop-zone" id="photo-drop-zone" onclick="document.getElementById('photo-file').click()">
+          <div class="drop-zone__icon">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          </div>
+          <div class="drop-zone__text"><strong>Click or drag a photo here</strong><br>JPG, PNG (equirectangular recommended)</div>
+        </div>
+        <input type="file" id="photo-file" accept="image/*" style="display:none;">
+      </div>
+
+      <div id="viewer-360-wrap" style="display:none;margin-top:1rem;">
+        <div style="font-size:.78rem;color:var(--muted);margin-bottom:.5rem;font-weight:500;text-transform:uppercase;letter-spacing:.06em;">Interactive preview — drag to explore</div>
+        <div id="viewer-360" style="width:100%;height:220px;border-radius:8px;overflow:hidden;position:relative;background:#0f172a;cursor:grab;user-select:none;">
+          <canvas id="viewer-canvas" style="width:100%;height:100%;display:block;"></canvas>
+        </div>
+        <div style="margin-top:.6rem;font-size:.78rem;color:var(--subtle);text-align:center;">Drag to pan · Scroll to zoom</div>
+      </div>
+
+      <div id="photo-placeholder" style="margin-top:1rem;background:var(--blue-light);border:1px solid var(--border);border-radius:8px;padding:1.2rem;text-align:center;font-size:.84rem;color:var(--muted);line-height:1.6;">
+        No photo loaded yet.<br>Upload a panoramic image to preview it here.
+      </div>
+
+      <div class="form-field" style="margin-top:1.2rem;">
+        <label>City *</label>
+        <input type="text" id="photo-city" placeholder="e.g. Barcelona, Kyoto…">
+      </div>
+      <div class="form-field">
+        <label>Title *</label>
+        <input type="text" id="photo-title" placeholder="e.g. Sunset over the harbour">
+      </div>
+      <button class="btn-submit" id="btn-photo" onclick="submitPhoto()" disabled>
+        Share photo (+30 pts)
+      </button>
+      <div style="margin-top:.7rem;font-size:.8rem;color:var(--muted);line-height:1.5;">
+        Select a photo above, then fill in city and title to earn <strong>+30 pts</strong>.
+      </div>
+    </div>
+
+    <!-- VIDEO CARD -->
+    <div class="card">
+      <h3 style="display:flex;align-items:center;gap:.6rem;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+        Upload video (VR)
+      </h3>
+      <div class="form-field">
+        <label>City *</label>
+        <input type="text" id="vid-city" placeholder="e.g. Shibuya, Tokyo">
+      </div>
+      <div class="form-field">
+        <label>Title *</label>
+        <input type="text" id="vid-title" placeholder="e.g. Crossing Shibuya at night">
+      </div>
+      <div class="form-field">
+        <label>Description (optional)</label>
+        <input type="text" id="vid-desc" placeholder="e.g. 4K panoramic view">
+      </div>
+      <div class="form-field">
+        <label>Video file</label>
+        <div class="drop-zone" id="drop-zone" onclick="document.getElementById('video-file').click()">
+          <div class="drop-zone__icon">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          </div>
+          <div class="drop-zone__text"><strong>Click or drag a video here</strong><br>MP4, MOV, AVI (max 500 MB)</div>
+        </div>
+        <input type="file" id="video-file" accept="video/*" style="display:none;">
+        <div class="video-preview" id="video-preview"></div>
+      </div>
+
+      <div class="upload-progress" id="upload-progress">
+        <div class="progress-track" style="margin-top:0;"><div class="progress-fill" id="upload-fill" style="width:0%;"></div></div>
+        <div class="upload-status" id="upload-status">Uploading…</div>
+      </div>
+
+      <button class="btn-submit" id="btn-vid" onclick="submitVideo()">Upload and convert (+50 pts)</button>
+      <div style="margin-top:.9rem;font-size:.8rem;color:var(--muted);line-height:1.5;">
+        The video will be automatically converted to VR side-by-side format if ffmpeg is available on the server.
+      </div>
+    </div>
+
+  </div>
+
+  <div class="leaderboard">
+    <h3>Traveller leaderboard</h3>
+    <div id="leaderboard-list">
+      <div style="color: var(--muted); font-size: 0.9rem; padding: 1rem 0;">Loading data...</div>
+    </div>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<footer>
+  <div class="footer-inner">
+    <div class="footer-col">
+      <div class="footer-logo">WanderLens</div>
+      <p style="margin: 1rem 0 0; line-height: 1.6;">AI-powered travel planning for the modern explorer.</p>
+    </div>
+    <div class="footer-col">
+      <div class="footer-col__title">Product</div>
+      <a href="/search">Plan a Trip</a>
+      <a href="/input">Share Experience</a>
+      <a href="/register">Sign up</a>
+    </div>
+    <div class="footer-col">
+      <div class="footer-col__title">Project</div>
+      <a href="#">Built at HackUPC 2025</a>
+      <a href="/api/health">API Status</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    &copy; 2025 WanderLens. Built with passion for HackUPC 2025.
+  </div>
+</footer>
+
+<script>
+let currentRating = 5;
+
+// Stars
+document.querySelectorAll('.star-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const val = parseInt(btn.dataset.val);
+    currentRating = val;
+    document.getElementById('exp-rating').value = val;
+    document.querySelectorAll('.star-btn').forEach(b => {
+      if (parseInt(b.dataset.val) <= val) {
+        b.classList.add('active');
+        b.style.color = 'var(--gold)';
+      } else {
+        b.classList.remove('active');
+        b.style.color = 'var(--border)';
+      }
+    });
+  });
+});
+
+// Video drop zone
+const dz = document.getElementById('drop-zone');
+const fi = document.getElementById('video-file');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
+dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('drag-over'); if(e.dataTransfer.files[0]) setFile(e.dataTransfer.files[0]); });
+fi.addEventListener('change', () => { if(fi.files[0]) setFile(fi.files[0]); });
+
+function setFile(f) {
+  const dt = new DataTransfer(); dt.items.add(f); fi.files = dt.files;
+  const prev = document.getElementById('video-preview');
+  prev.textContent = `${f.name} (${(f.size/1024/1024).toFixed(1)} MB)`;
+  prev.style.display = 'block';
+}
+
+// ── 360 Photo Viewer ────────────────────────────────────────────────────────
+const photoDz  = document.getElementById('photo-drop-zone');
+const photoFi  = document.getElementById('photo-file');
+let viewer360  = { img: null, yaw: 0, pitch: 0, fov: 70, dragging: false, lastX: 0, lastY: 0 };
+
+photoDz.addEventListener('dragover', e => { e.preventDefault(); photoDz.classList.add('drag-over'); });
+photoDz.addEventListener('dragleave', () => photoDz.classList.remove('drag-over'));
+photoDz.addEventListener('drop', e => { e.preventDefault(); photoDz.classList.remove('drag-over'); if(e.dataTransfer.files[0]) load360(e.dataTransfer.files[0]); });
+photoFi.addEventListener('change', () => { if(photoFi.files[0]) load360(photoFi.files[0]); });
+
+function load360(file) {
+  if (!file.type.startsWith('image/')) return toast('Please select a valid image file.');
+  const url = URL.createObjectURL(file);
+  const img  = new Image();
+  img.onload = () => {
+    viewer360.img   = img;
+    viewer360.yaw   = 0;
+    viewer360.pitch = 0;
+    viewer360.fov   = 70;
+    document.getElementById('photo-placeholder').style.display = 'none';
+    document.getElementById('viewer-360-wrap').style.display   = 'block';
+    document.getElementById('btn-photo').disabled = false;
+    initViewer360();
+    render360();
+  };
+  img.src = url;
+}
+
+function initViewer360() {
+  const canvas = document.getElementById('viewer-canvas');
+  const wrap   = document.getElementById('viewer-360');
+
+  canvas.width  = wrap.clientWidth  * window.devicePixelRatio;
+  canvas.height = wrap.clientHeight * window.devicePixelRatio;
+
+  wrap.addEventListener('mousedown',  e => { viewer360.dragging = true; viewer360.lastX = e.clientX; viewer360.lastY = e.clientY; wrap.style.cursor='grabbing'; });
+  wrap.addEventListener('mousemove',  e => {
+    if (!viewer360.dragging) return;
+    const dx = e.clientX - viewer360.lastX;
+    const dy = e.clientY - viewer360.lastY;
+    viewer360.yaw   -= dx * 0.25;
+    viewer360.pitch  = Math.max(-85, Math.min(85, viewer360.pitch - dy * 0.25));
+    viewer360.lastX  = e.clientX;
+    viewer360.lastY  = e.clientY;
+    render360();
+  });
+  wrap.addEventListener('mouseup',    () => { viewer360.dragging = false; wrap.style.cursor='grab'; });
+  wrap.addEventListener('mouseleave', () => { viewer360.dragging = false; wrap.style.cursor='grab'; });
+  wrap.addEventListener('wheel', e => {
+    e.preventDefault();
+    viewer360.fov = Math.max(30, Math.min(110, viewer360.fov + e.deltaY * 0.05));
+    render360();
+  }, { passive: false });
+
+  // Touch support
+  let lastTouchX = 0, lastTouchY = 0;
+  wrap.addEventListener('touchstart', e => { lastTouchX = e.touches[0].clientX; lastTouchY = e.touches[0].clientY; });
+  wrap.addEventListener('touchmove',  e => {
+    e.preventDefault();
+    const dx = e.touches[0].clientX - lastTouchX;
+    const dy = e.touches[0].clientY - lastTouchY;
+    viewer360.yaw   -= dx * 0.3;
+    viewer360.pitch  = Math.max(-85, Math.min(85, viewer360.pitch - dy * 0.3));
+    lastTouchX = e.touches[0].clientX;
+    lastTouchY = e.touches[0].clientY;
+    render360();
+  }, { passive: false });
+}
+
+function render360() {
+  const canvas = document.getElementById('viewer-canvas');
+  const ctx    = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const img = viewer360.img;
+  if (!img) return;
+
+  const fovRad   = viewer360.fov * Math.PI / 180;
+  const yawRad   = viewer360.yaw   * Math.PI / 180;
+  const pitchRad = viewer360.pitch * Math.PI / 180;
+  const iW = img.width, iH = img.height;
+
+  // Equirectangular → canvas pixel mapping
+  const imageData = ctx.createImageData(W, H);
+  const offCanvas = document.createElement('canvas');
+  offCanvas.width = iW; offCanvas.height = iH;
+  const offCtx = offCanvas.getContext('2d');
+  offCtx.drawImage(img, 0, 0);
+  const srcData = offCtx.getImageData(0, 0, iW, iH).data;
+
+  for (let py = 0; py < H; py++) {
+    for (let px = 0; px < W; px++) {
+      // Screen → normalised [-1,1]
+      const nx = (px / W - 0.5) * 2;
+      const ny = (0.5 - py / H) * 2;
+
+      // Apply FOV
+      const halfFov = fovRad / 2;
+      const aspect  = W / H;
+      const rx = nx * Math.tan(halfFov) * aspect;
+      const ry = ny * Math.tan(halfFov);
+
+      // Ray direction
+      const len = Math.sqrt(rx*rx + ry*ry + 1);
+      let dx = rx / len, dy = ry / len, dz = 1 / len;
+
+      // Rotate by pitch (around X)
+      const cp = Math.cos(pitchRad), sp = Math.sin(pitchRad);
+      const dy2 = dy * cp - dz * sp;
+      const dz2 = dy * sp + dz * cp;
+      dy = dy2; dz = dz2;
+
+      // Rotate by yaw (around Y)
+      const cy = Math.cos(yawRad);
+      const sy = Math.sin(yawRad);
+      const dx2 = dx * cy + dz2 * sy;
+      const dz3 = -dx * sy + dz2 * cy;
+      dx = dx2; dz = dz3;
+
+      // Spherical coords
+      const theta = Math.atan2(dx, dz);    // longitude [-PI, PI]
+      const phi   = Math.asin(Math.max(-1, Math.min(1, dy))); // latitude [-PI/2, PI/2]
+
+      // Map to equirectangular UV
+      const u = (theta / (2 * Math.PI) + 0.5);
+      const v = (0.5 - phi / Math.PI);
+
+      const sx = Math.floor(u * iW) % iW;
+      const sy2 = Math.floor(v * iH) % iH;
+
+      const si = (sy2 * iW + sx) * 4;
+      const di = (py * W + px) * 4;
+      imageData.data[di]   = srcData[si];
+      imageData.data[di+1] = srcData[si+1];
+      imageData.data[di+2] = srcData[si+2];
+      imageData.data[di+3] = 255;
+    }
+  }
+  ctx.putImageData(imageData, 0, 0);
+}
+// ── End 360 Viewer ──────────────────────────────────────────────────────────
+
+// Toast
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 3500);
+}
+
+// Update Points Visuals
+function updatePoints(pts) {
+  document.getElementById('pts-display').textContent = pts;
+  const pct = Math.min(pts, 100);
+  document.getElementById('pts-bar').style.width = pct + '%';
+  const rem = Math.max(100 - pts, 0);
+  document.getElementById('pts-hint').textContent = rem > 0 ? `${rem} pts to unlock a discount` : 'Flight discount unlocked!';
+}
+updatePoints(parseInt(document.getElementById('pts-display').textContent) || 0);
+
+// Submit experience
+async function submitExperience() {
+  const city   = document.getElementById('exp-city').value.trim();
+  const text   = document.getElementById('exp-text').value.trim();
+  const title  = document.getElementById('exp-title').value.trim();
+  const rating = currentRating;
+
+  if (!city) return toast('Please enter the city.');
+  if (text.length < 20) return toast('Your experience must be at least 20 characters.');
+
+  const btn = document.getElementById('btn-exp');
+  btn.disabled = true; btn.textContent = 'Publishing…';
+
+  try {
+    const res  = await fetch('/input/experience', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ city, title, text, rating }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      toast(data.message);
+      updatePoints(data.total_points);
+      document.getElementById('exp-city').value  = '';
+      document.getElementById('exp-title').value = '';
+      document.getElementById('exp-text').value  = '';
+      loadLeaderboard();
+    } else {
+      toast(data.error || 'Unknown error');
+    }
+  } catch(e) {
+    toast('Network error. Please try again.');
+  }
+  btn.disabled = false; btn.textContent = 'Publish experience (+20 pts)';
+}
+
+// Submit video
+async function submitVideo() {
+  const city  = document.getElementById('vid-city').value.trim();
+  const title = document.getElementById('vid-title').value.trim();
+  const desc  = document.getElementById('vid-desc').value.trim();
+  const file  = document.getElementById('video-file').files[0];
+
+  if (!city)  return toast('Please enter the city.');
+  if (!title) return toast('Please enter a title.');
+  if (!file)  return toast('Please select a video file.');
+
+  const btn    = document.getElementById('btn-vid');
+  btn.disabled = true;
+  const prog   = document.getElementById('upload-progress');
+  const fill   = document.getElementById('upload-fill');
+  const status = document.getElementById('upload-status');
+
+  prog.style.display = 'block';
+  status.textContent = 'Uploading video…';
+  fill.style.width   = '0%';
+
+  const fd = new FormData();
+  fd.append('video', file);
+  fd.append('city', city);
+  fd.append('title', title);
+  fd.append('description', desc);
+
+  let pct = 0;
+  const iv = setInterval(() => {
+    pct = Math.min(pct + 2, 85);
+    fill.style.width = pct + '%';
+    if (pct > 60) status.textContent = 'Processing and converting to VR…';
+  }, 300);
+
+  try {
+    const res  = await fetch('/input/upload-video', { method: 'POST', body: fd });
+    const data = await res.json();
+    clearInterval(iv);
+    fill.style.width = '100%';
+
+    if (data.success) {
+      status.textContent = data.vr_ready ? 'Converted to VR successfully.' : 'Uploaded (VR conversion unavailable).';
+      toast(data.message);
+      updatePoints(data.total_points);
+      document.getElementById('vid-city').value  = '';
+      document.getElementById('vid-title').value = '';
+      document.getElementById('vid-desc').value  = '';
+      document.getElementById('video-preview').style.display = 'none';
+      document.getElementById('video-file').value = '';
+      loadLeaderboard();
+    } else {
+      status.textContent = 'Upload failed.';
+      toast(data.error || 'Unknown error');
+    }
+  } catch(e) {
+    clearInterval(iv);
+    status.textContent = 'Connection error.';
+    toast('Network error. Please try again.');
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Upload and convert (+50 pts)';
+  setTimeout(() => { prog.style.display = 'none'; fill.style.width = '0%'; }, 4000);
+}
+
+// Submit photo
+async function submitPhoto() {
+  const city  = document.getElementById('photo-city').value.trim();
+  const title = document.getElementById('photo-title').value.trim();
+  const file  = document.getElementById('photo-file').files[0];
+
+  if (!city)  return toast('Please enter the city.');
+  if (!title) return toast('Please enter a title.');
+  if (!file)  return toast('Please select a photo first.');
+
+  const btn    = document.getElementById('btn-photo');
+  btn.disabled = true;
+  btn.textContent = 'Uploading…';
+
+  const fd = new FormData();
+  fd.append('photo', file);
+  fd.append('city', city);
+  fd.append('title', title);
+
+  try {
+    const res  = await fetch('/input/upload-photo', { method: 'POST', body: fd });
+    const data = await res.json();
+    if (data.success) {
+      toast(data.message);
+      updatePoints(data.total_points);
+      document.getElementById('photo-city').value  = '';
+      document.getElementById('photo-title').value = '';
+      document.getElementById('photo-file').value  = '';
+      document.getElementById('viewer-360-wrap').style.display   = 'none';
+      document.getElementById('photo-placeholder').style.display = 'block';
+      viewer360.img = null;
+      loadLeaderboard();
+    } else {
+      toast(data.error || 'Unknown error');
+    }
+  } catch(e) {
+    toast('Network error. Please try again.');
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Share photo (+30 pts)';
+}
+
+// Leaderboard
+async function loadLeaderboard() {
+  try {
+    const res  = await fetch('/input/leaderboard');
+    const data = await res.json();
+    const medals = ['1', '2', '3'];
+
+    document.getElementById('leaderboard-list').innerHTML = data.map((u, i) => `
+      <div class="lb-row">
+        <span class="lb-rank">${i < 3 ? ['#1','#2','#3'][i] : (i+1)+'.'}</span>
+        <span class="lb-username">${u.username}</span>
+        <span class="lb-meta">${u.experiences||0} exp &middot; ${u.videos||0} videos</span>
+        <span class="lb-pts">${u.points} pts</span>
+      </div>
+    `).join('') || '<div style="color:var(--muted);font-size:0.9rem;padding:1rem 0;">No data yet. Be the first to share!</div>';
+  } catch(e) {}
+}
+
+loadLeaderboard();
+</script>
+</body>
+</html>
